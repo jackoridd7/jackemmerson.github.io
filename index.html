@@ -4,23 +4,52 @@
   <meta charset="utf-8" />
   <title>Jack Emmerson – Designing Tomorrow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CDN – no build step needed -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
 
   <!-- Page-specific styles -->
   <style>
-    body    {background:radial-gradient(#0f172a 20%,#020617 80%);}
-    #field  {position:fixed;inset:0;pointer-events:none;overflow:hidden;}
-    .char   {position:absolute;font-weight:500;color:#94a3b8;
-             transform:translate(-50%,-50%);transition:transform 6s ease,
-             left 6s ease,top 6s ease,opacity 6s ease;}
+    /* cosmic backdrop */
+    body {background: radial-gradient(#0f172a 20%,#020617 80%);}
+
+    /* container that holds every animated character */
+    #field {position:fixed; inset:0; overflow:hidden; pointer-events:none;}
+
+    /* individual characters */
+    .char{
+      position:absolute;
+      font: 11px/18px "Courier New", monospace; /* tiny monospace */
+      font-weight:500;
+      color:#94a3b8;
+      transform:translate(-50%,-50%);
+      transition:transform 6s ease, left 6s ease, top 6s ease, opacity 6s ease;
+      opacity:0.8;
+    }
+
+    /* faint horizontal scan-lines like Midjourney */
+    #field::after{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none; z-index:1;
+      background-image:repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.03) 0,
+          rgba(255,255,255,0.03) 1px,
+          transparent 1px,
+          transparent 3px
+      );
+    }
   </style>
 
+  <!-- scripts -->
   <script defer src="assets/site.js"></script>
   <script defer src="assets/spiral.js"></script>
 </head>
 
 <body class="text-slate-100 font-sans leading-relaxed">
-  <!-- NAV -->
+
+  <!-- NAVBAR -->
   <header class="fixed top-0 inset-x-0 z-20">
     <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
       <div class="flex items-center gap-3">
@@ -35,12 +64,11 @@
     </nav>
   </header>
 
-  <!-- Text field that will morph -->
+  <!-- animated field of characters -->
   <div id="field"></div>
 
-  <!-- HERO copy sits on top -->
-  <section class="relative z-10 min-h-screen flex flex-col items-center justify-center
-                   text-center px-6 pt-24">
+  <!-- HERO COPY -->
+  <section class="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24">
     <h1 class="text-6xl md:text-7xl font-extrabold mb-4
                bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-400
                bg-clip-text text-transparent">
@@ -48,7 +76,7 @@
     </h1>
 
     <p class="max-w-xl text-lg text-slate-400 mb-10">
-      Aerospace engineering, CFD wizardry &amp; orbital mechanics – built in public.
+      Aerospace engineering, CFD wizardry&nbsp;&amp; orbital mechanics – built in public.
     </p>
 
     <div class="flex gap-4">
