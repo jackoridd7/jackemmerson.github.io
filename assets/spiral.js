@@ -1,68 +1,66 @@
-/* Mid-journey-style hero animation
- * ---------------------------------------------
- * 1. Fills the viewport with horizontal rows of
- *    aerospace keywords (monospace <span> grid).
- * 2. After 400 ms, morphs every character onto a
- *    logarithmic spiral:  r = b θ
- *    CSS transitions handle the smooth motion.
- * ---------------------------------------------
+/*
+ * Continuous vortex animation (upright characters)
+ * ------------------------------------------------
+ * • Creates a big rectangular grid of <span>s filled with aerospace words.
+ * • Every frame, each span slides a tiny step further along the spiral
+ *   r = bθ  (log-spiral), keeping letters upright (no rotation).
+ * • When a span travels beyond the outer radius, its θ is wrapped so it
+ *   re-enters near the centre – producing endless flow.
  */
 
 (() => {
-  const FIELD    = document.getElementById('field');
-
-  /* — configuration — */
-  const ROWS     = 36;                            // number of horizontal rows
-  const CHAR_W   = 6;                             // monospace char width (px)
-  const ROW_H    = 18;                            // line-height (px)
-  const dTheta   = 0.34;                          // θ step per character
-  const B        = 3.6;                           // controls radial spacing
-  const WORDS    = [
-    'TRAJECTORY','PROPULSION','Δv','CFD','RE-ENTRY','ORBITAL-MECH',
-    'STARSHIP','MARS-BASE','SPICE','ROVER-DESIGN','UAV','SCRAMJET'
+  /* ===== CONFIG ===== */
+  const ROWS      = 48;                        // vertical rows of text
+  const CHAR_W    = 6;                         // monospace width  (px)
+  const LINE_H    = 18;                        // line-height      (px)
+  const DTHETA    = 0.012;                     // rad/frame speed
+  const B         = 4.0;                       // spiral spacing   (b in r=bθ)
+  const WORDS     = [
+    'TRAJECTORY','PROPULSION','Δv','CFD','RE-ENTRY',
+    'ORBITAL-MECH','STARSHIP','MARS-BASE','SPICE',
+    'ROVER-DESIGN','SCRAMJET','UAV'
   ];
-  /* ———————————— */
+  /* ================== */
 
-  const W  = window.innerWidth;
-  const H  = window.innerHeight;
-  const CX = W / 2;
-  const CY = H / 2;
+  const FIELD  = document.getElementById('field');
+  const BASE   = (WORDS.join(' • ') + ' • ').replace(/ /g, '\u00A0');
+  const LINE   = BASE.repeat(300);            // plenty long (clipped later)
+  const W      = window.innerWidth;
+  const H      = window.innerHeight;
+  const CX     = W / 2;
+  const CY     = H / 2;
+  const MAX_R  = Math.hypot(CX, CY) + 100;
 
-  const BASE_LINE = (WORDS.join(' • ') + ' • ').replace(/ /g, '\u00A0');
-  const LINE      = BASE_LINE.repeat(Math.ceil(W / (BASE_LINE.length * CHAR_W)));
-
-  /* 1️⃣ build the flat rows */
+  // Build the grid once
   const spans = [];
+  let index = 0;
   for (let r = 0; r < ROWS; r++) {
-    const top = CY - (ROWS / 2 - r) * ROW_H;
-    for (let c = 0; c < LINE.length; c++) {
+    const y = CY - (ROWS / 2 - r) * LINE_H;
+    for (let c = 0; c < W / CHAR_W + 40; c++) {
       const span = document.createElement('span');
-      span.className  = 'char';
-      span.textContent = LINE[c];
-      span.style.left = `${c * CHAR_W}px`;
-      span.style.top  = `${top}px`;
+      span.className = 'char';
+      span.textContent = LINE.charAt((index++) % LINE.length);
+      span.dataset.theta = (Math.random() * 2 * Math.PI).toString(); // random start θ
       FIELD.appendChild(span);
       spans.push(span);
     }
   }
 
-  /* 2️⃣ morph to spiral */
-  setTimeout(() => {
-    let theta = 0;
-    const maxR = Math.hypot(CX, CY) + 100;        // past viewport corner
-    for (const span of spans) {
-      const r = B * theta;
-      if (r > maxR) { span.style.opacity = 0; theta += dTheta; continue; }
+  // Animation loop
+  function tick() {
+    for (const s of spans) {
+      let theta = parseFloat(s.dataset.theta) + DTHETA;
+      if (theta > (MAX_R / B)) theta -= (MAX_R / B);   // wrap when too far
+      s.dataset.theta = theta;
 
+      const r = B * theta;
       const x = CX + r * Math.cos(theta);
       const y = CY + r * Math.sin(theta);
 
-      span.style.left      = `${x}px`;
-      span.style.top       = `${y}px`;
-      span.style.transform = `translate(-50%,-50%) rotate(${theta * 57.2958}deg)`;
-      span.style.opacity   = 0.9;
-
-      theta += dTheta;
+      s.style.left = `${x}px`;
+      s.style.top  = `${y}px`;
     }
-  }, 400);
+    requestAnimationFrame(tick);
+  }
+  tick();
 })();
