@@ -5,36 +5,48 @@
   <title>Shop – Jack Emmerson</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+  <style>body{background:radial-gradient(#0f172a 20%,#020617 80%);}</style>
   <script defer src="assets/site.js"></script>
 </head>
 
-<body class="bg-slate-900 text-slate-100 font-sans leading-relaxed">
-  <!-- NAV -->
-  <header class="bg-slate-800/70 backdrop-blur sticky top-0 z-20 shadow">
-    <nav class="max-w-6xl mx-auto flex items-center gap-6 p-4">
-      <img src="assets/logo.svg" alt="logo" class="h-8 w-8" />
-      <a data-tab="jack"  href="index.html"  class="nav-link">Jack</a>
-      <a data-tab="tools" href="tools.html" class="nav-link">Tools</a>
-      <a data-tab="shop"  href="shop.html" class="nav-link">Shop</a>
+<body class="text-slate-100 font-sans leading-relaxed">
+  <!-- NAV (identical) -->
+  <header class="fixed top-0 inset-x-0 z-20">
+    <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
+      <div class="flex items-center gap-3">
+        <img src="assets/logo.svg" alt="logo" class="h-8 w-8" />
+        <span class="font-semibold tracking-wide">Jack Emmerson</span>
+      </div>
+      <div class="space-x-6 text-slate-300">
+        <a data-tab="jack"  href="index.html"  class="nav-link hover:text-emerald-300">Jack</a>
+        <a data-tab="tools" href="tools.html" class="nav-link hover:text-emerald-300">Tools</a>
+        <a data-tab="shop"  href="shop.html"  class="nav-link hover:text-emerald-300">Shop</a>
+      </div>
     </nav>
   </header>
 
-  <section class="max-w-6xl mx-auto py-16 px-6">
+  <section class="max-w-7xl mx-auto pt-32 pb-20 px-6 text-center">
     <h1 class="text-4xl font-bold mb-4">Shop</h1>
-    <p class="text-slate-400 mb-8">Coming soon! Check back for merch and digital downloads.</p>
+    <p class="text-slate-400 mb-12">Coming soon! Check back for merch and digital downloads.</p>
 
-    <!-- Example product grid -->
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-50">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10 opacity-50">
       <div class="bg-slate-800 rounded-2xl p-6 shadow-xl">
         <div class="h-40 bg-slate-700 rounded-lg mb-4"></div>
         <h2 class="font-semibold mb-2">CFD Sticker Pack</h2>
-        <p class="text-sm text-slate-400 mb-4">Show off your love for vortices and divergence-free flow.</p>
-        <button class="cursor-not-allowed bg-slate-700 text-slate-500 px-4 py-2 rounded-lg w-full">Soon</button>
+        <p class="text-sm text-slate-400 mb-4">
+          Show off your love for vortices and divergence-free flow.
+        </p>
+        <button class="cursor-not-allowed bg-slate-700 text-slate-500
+                       px-4 py-2 rounded-lg w-full">
+          Soon
+        </button>
       </div>
       <!-- Add more placeholder cards -->
     </div>
   </section>
 
-  <footer class="text-center text-slate-500 text-sm py-4">&copy; 2025 Jack Emmerson</footer>
+  <footer class="text-center text-slate-500 text-sm py-6">
+    &copy; 2025 Jack Emmerson
+  </footer>
 </body>
 </html>
