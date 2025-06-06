@@ -5,46 +5,48 @@
   <title>Jack Emmerson – Portfolio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+  <script defer src="assets/site.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans">
-  <!-- Header -->
-  <header class="max-w-4xl mx-auto p-6">
-    <h1 class="text-4xl font-bold tracking-tight">Jack Emmerson</h1>
-    <p class="text-lg text-slate-400">Aerospace Eng. student · CFD dev · Maker of tiny web games</p>
-    <nav class="mt-4 space-x-4">
-      <a href="#projects" class="hover:text-emerald-300">Projects</a>
-      <a href="#games"    class="hover:text-emerald-300">Games & Tools</a>
-      <a href="#contact"  class="hover:text-emerald-300">Contact</a>
+
+<body class="bg-slate-900 text-slate-100 font-sans leading-relaxed">
+  <!-- NAV -->
+  <header class="bg-slate-800/70 backdrop-blur sticky top-0 z-20 shadow">
+    <nav class="max-w-6xl mx-auto flex items-center gap-6 p-4">
+      <img src="assets/logo.svg" alt="logo" class="h-8 w-8" />
+      <a data-tab="jack"  href="index.html"   class="nav-link">Jack</a>
+      <a data-tab="tools" href="tools.html"  class="nav-link">Tools</a>
+      <a data-tab="shop"  href="shop.html"   class="nav-link">Shop</a>
     </nav>
   </header>
 
-  <!-- Projects -->
-  <section id="projects" class="max-w-4xl mx-auto p-6">
-    <h2 class="text-2xl font-semibold mb-4">Highlighted Work</h2>
-    <div class="grid gap-6 md:grid-cols-2">
-      <article class="bg-slate-800 rounded-xl p-4 shadow">
-        <h3 class="font-semibold text-xl">Micro UAV Capstone</h3>
-        <p class="text-slate-400 text-sm">A 2 U form-factor UAV designed to deploy from a sounding rocket…</p>
-        <a href="https://github.com/you/project" class="text-emerald-300 text-sm">View repo →</a>
+  <!-- HERO -->
+  <section class="max-w-6xl mx-auto py-16 px-6">
+    <h1 class="text-5xl font-extrabold mb-2">Jack Emmerson</h1>
+    <p class="text-lg text-slate-400 mb-8">Aerospace engineering student · CFD developer · Maker of tiny web games</p>
+
+    <div class="grid md:grid-cols-2 gap-10">
+      <article>
+        <h2 class="text-2xl font-semibold mb-4">Highlighted Work</h2>
+        <div class="bg-slate-800 rounded-2xl p-6 shadow-lg">
+          <h3 class="text-xl font-semibold">Micro UAV Capstone</h3>
+          <p class="text-slate-400 mb-2">A 2 U form-factor UAV designed to deploy from a sounding rocket…</p>
+          <a href="https://github.com/you/project" class="text-emerald-300 underline text-sm">View repo →</a>
+        </div>
       </article>
-      <!-- Add more cards here -->
+
+      <article>
+        <h2 class="text-2xl font-semibold mb-4">Fun Pages</h2>
+        <ul class="list-disc list-inside space-y-1">
+          <li><a class="underline hover:text-emerald-300" href="tools/asteroids.html">Asteroids clone in p5.js</a></li>
+          <li><a class="underline hover:text-emerald-300" href="tools/deltaV.html">Δv calculator (JS + math.js)</a></li>
+        </ul>
+      </article>
     </div>
+
+    <h2 class="text-2xl font-semibold mt-12 mb-4">Get in touch</h2>
+    <p>Email: <a class="underline hover:text-emerald-300" href="mailto:sidwellcourtney@gmail.com">sidwellcourtney@gmail.com</a></p>
   </section>
 
-  <!-- Games -->
-  <section id="games" class="max-w-4xl mx-auto p-6">
-    <h2 class="text-2xl font-semibold mb-4">Fun Pages</h2>
-    <ul class="space-y-2">
-      <li><a href="games/asteroids.html" class="underline hover:text-emerald-300">Asteroids clone in p5.js</a></li>
-      <li><a href="tools/deltaV.html" class="underline hover:text-emerald-300">Δv calculator (JS + math.js)</a></li>
-    </ul>
-  </section>
-
-  <!-- Contact -->
-  <section id="contact" class="max-w-4xl mx-auto p-6">
-    <h2 class="text-2xl font-semibold mb-4">Get in touch</h2>
-    <p>Email me: <a href="mailto:sidwellcourtney@gmail.com" class="underline hover:text-emerald-300">sidwellcourtney@gmail.com</a></p>
-    <p class="text-slate-400 text-sm mt-2">© 2025 Jack Emmerson</p>
-  </section>
+  <footer class="text-center text-slate-500 text-sm py-4">&copy; 2025 Jack Emmerson</footer>
 </body>
 </html>
