@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <title>Tools – Jack Emmerson</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+  <script defer src="assets/site.js"></script>
+</head>
+
+<body class="bg-slate-900 text-slate-100 font-sans leading-relaxed">
+  <!-- NAV -->
+  <header class="bg-slate-800/70 backdrop-blur sticky top-0 z-20 shadow">
+    <nav class="max-w-6xl mx-auto flex items-center gap-6 p-4">
+      <img src="assets/logo.svg" alt="logo" class="h-8 w-8" />
+      <a data-tab="jack"  href="index.html"  class="nav-link">Jack</a>
+      <a data-tab="tools" href="tools.html" class="nav-link">Tools</a>
+      <a data-tab="shop"  href="shop.html"  class="nav-link">Shop</a>
+    </nav>
+  </header>
+
+  <section class="max-w-6xl mx-auto py-16 px-6">
+    <h1 class="text-4xl font-bold mb-8">Interactive Tools</h1>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Card -->
+      <a href="tools/asteroids.html" class="group block bg-slate-800 rounded-2xl p-6 shadow-xl hover:-translate-y-1 transition">
+        <h2 class="font-semibold text-xl mb-2 group-hover:text-emerald-300">Asteroids Clone</h2>
+        <p class="text-slate-400 text-sm">A classic arcade remake using p5.js and plain JS.</p>
+      </a>
+      <!-- Card -->
+      <a href="tools/deltaV.html" class="group block bg-slate-800 rounded-2xl p-6 shadow-xl hover:-translate-y-1 transition">
+        <h2 class="font-semibold text-xl mb-2 group-hover:text-emerald-300">Δv Calculator</h2>
+        <p class="text-slate-400 text-sm">Instant orbital manoeuvre maths in the browser.</p>
+      </a>
+      <!-- More cards go here -->
+    </div>
+  </section>
+
+  <footer class="text-center text-slate-500 text-sm py-4">&copy; 2025 Jack Emmerson</footer>
+</body>
+</html>
