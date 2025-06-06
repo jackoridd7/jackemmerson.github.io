@@ -6,20 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
 
+  <!-- Page-specific styles -->
   <style>
-    /* star-field-ish backdrop */
-    body {background: radial-gradient(#0f172a 20%, #020617 80%);}
-    /* spiral container */
-    #spiral{
-      width:620px;height:620px;position:absolute;left:50%;top:50%;
-      transform:translate(-50%,-50%);animation:spin 40s linear infinite;
-    }
-    #spiral span{
-      position:absolute;font-weight:500;color:#94a3b8;white-space:pre;
-      transform-origin:0 0;
-    }
-    @keyframes spin{from{transform:translate(-50%,-50%) rotate(0deg);}
-                    to  {transform:translate(-50%,-50%) rotate(360deg);}}
+    body    {background:radial-gradient(#0f172a 20%,#020617 80%);}
+    #field  {position:fixed;inset:0;pointer-events:none;overflow:hidden;}
+    .char   {position:absolute;font-weight:500;color:#94a3b8;
+             transform:translate(-50%,-50%);transition:transform 6s ease,
+             left 6s ease,top 6s ease,opacity 6s ease;}
   </style>
 
   <script defer src="assets/site.js"></script>
@@ -42,21 +35,23 @@
     </nav>
   </header>
 
-  <!-- HERO -->
-  <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24">
-    <div id="spiral"></div>
+  <!-- Text field that will morph -->
+  <div id="field"></div>
 
-    <h1 class="relative text-6xl md:text-7xl font-extrabold
+  <!-- HERO copy sits on top -->
+  <section class="relative z-10 min-h-screen flex flex-col items-center justify-center
+                   text-center px-6 pt-24">
+    <h1 class="text-6xl md:text-7xl font-extrabold mb-4
                bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-400
                bg-clip-text text-transparent">
       Designing&nbsp;Tomorrow
     </h1>
 
-    <p class="relative mt-6 max-w-xl text-lg text-slate-400">
-      Aerospace engineering, CFD wizardry&nbsp;&amp; orbital mechanics – built in public.
+    <p class="max-w-xl text-lg text-slate-400 mb-10">
+      Aerospace engineering, CFD wizardry &amp; orbital mechanics – built in public.
     </p>
 
-    <div class="relative mt-10 flex gap-4">
+    <div class="flex gap-4">
       <a href="tools.html"
          class="px-8 py-3 rounded-full bg-emerald-400/20 text-emerald-300
                 ring-1 ring-emerald-400/30 backdrop-blur
@@ -72,7 +67,7 @@
     </div>
   </section>
 
-  <footer class="text-center text-slate-500 text-sm py-6">
+  <footer class="relative z-10 text-center text-slate-500 text-sm py-6">
     &copy; 2025 Jack Emmerson
   </footer>
 </body>
