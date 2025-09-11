@@ -103,7 +103,7 @@ class VortexText extends HTMLElement {
     const morph    = this._easeInOut(morphRaw);
 
     // Ultra-slow intro: 0.4% speed during first 3s; then ramp to 100%
-    const speedNow = (this.speed * 0.5) * (0.004 + 0.996 * morph);
+    const speedNow = (this.speed * 0.05) * (0.004 + 0.996 * morph);
 
     const halfRowsH = (this.rowsVis * this.cellH) / 2;
     const line = this.line;
