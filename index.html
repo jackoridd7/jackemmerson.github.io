@@ -2,62 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
-
-  <!-- Tailwind (optional). Page still looks fine if this fails. -->
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
     :root { --bg1:#0f172a; --bg2:#020617; --ink:#e2e8f0; --muted:#94a3b8; }
     html,body{height:100%}
     body{
-      margin:0;
-      color:var(--ink);
+      margin:0; color:var(--ink);
       background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
-      font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
+      font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
     }
-    /* Vortex sits behind everything */
-    vortex-text{ position:fixed; inset:0; z-index:0; pointer-events:none; display:block; }
-    /* Faint scanlines */
-    .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:1;
-      background-image:repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,.03) 0px,
-        rgba(255,255,255,.03) 1px,
-        transparent 1px,
-        transparent 3px
-      );
+    vortex-ultraslow{ position:fixed; inset:0; z-index:0; pointer-events:none; display:block; }
+    .scanlines{ position:fixed; inset:0; z-index:1; pointer-events:none;
+      background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 3px);
     }
-    /* Content above the effect */
     .content-layer{ position:relative; z-index:10; }
-    /* Buttons */
-    .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15);
-           backdrop-filter:saturate(180%) blur(6px); }
+    .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px); }
     .pill.primary{ background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.30); }
     .pill.primary:hover{ background:rgba(16,185,129,.28); }
     .pill.ghost{ background:rgba(255,255,255,.08); color:#e5e7eb; }
     .pill.ghost:hover{ background:rgba(255,255,255,.16); }
   </style>
 </head>
-
 <body>
-
-  <!-- Canvas vortex (grid-snapped, one letter per cell).
-       Center pushed down so hero sits higher than spiral centre. -->
-  <vortex-text
-    data-words="TRAJECTORY,PROPULSION,Δv,CFD,REENTRY,ORBITAL,STARSHIP,MARS,SPICE,ROVER,SCRAMJET,UAV"
-    data-cellw="12" data-cellh="36"
-    data-rows="40" data-b="4.2"
-    data-centerx="0.5" data-centery="0.58"
-    data-boot="3000"
-    data-introspd="0.000001"  <!-- rad/s during intro (~still) -->
-    data-finalspd="0.000100"  <!-- rad/s after morph (very slow) -->
-    data-debug="0"
-  ></vortex-text>
+  <!-- New element name so old definitions cannot interfere -->
+  <vortex-ultraslow></vortex-ultraslow>
   <div class="scanlines"></div>
 
-  <!-- NAV -->
   <header class="content-layer fixed top-0 inset-x-0">
     <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
       <div class="flex items-center gap-3">
@@ -72,12 +47,10 @@
     </nav>
   </header>
 
-  <!-- HERO (raised above spiral centre) -->
   <main class="content-layer min-h-screen grid place-items-center px-6 pt-24">
     <section class="text-center max-w-2xl" style="transform:translateY(-12vh)">
       <h1 class="text-6xl md:text-7xl font-extrabold"
-          style="background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
-                 -webkit-background-clip:text; background-clip:text; color:transparent;">
+          style="background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9); -webkit-background-clip:text; background-clip:text; color:transparent;">
         Designing&nbsp;Tomorrow
       </h1>
       <p class="mt-6 text-lg" style="color:var(--muted)">
@@ -94,170 +67,147 @@
     © 2025 Jack Emmerson
   </footer>
 
-  <!-- INLINE vortex implementation (no external JS; version inline-r13) -->
   <script>
+  // Kill any service workers that could be serving stale files
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+  }
+
+  // Inline, uncacheable, ultraslow, one-letter-per-cell spiral
   (function(){
-    class VortexText extends HTMLElement {
-      connectedCallback() {
-        const num = (k, d) => +((this.getAttribute(k) ?? this.dataset[k]) ?? d);
-        const str = (k, d) => (this.getAttribute(k) ?? this.dataset[k] ?? d);
+    class VortexUltraSlow extends HTMLElement {
+      connectedCallback(){
+        // CONSTANTS: change here to taste
+        this.words = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
+        const CELL_W=12, CELL_H=36;            // 2× size
+        const ROWS=40, B=4.2;                  // r = B*θ
+        const CENTER_X=0.5, CENTER_Y=0.58;     // keep hero above centre
+        const BOOT_MS=3000;                    // rows phase
+        const SPEED_INTRO=0.000005;            // rad/s (almost still)
+        const SPEED_FINAL=0.0005;              // rad/s (glacial)
+        const VERSION="inline-lock-r15";
 
-        // config – speeds are ABSOLUTE in rad/s (no base multiplier)
-        this.words    = str("data-words", "CFD,Δv,ORBITAL").split(",").map(s=>s.trim());
-        this.cellW    = num("data-cellw", 12);
-        this.cellH    = num("data-cellh", 36);
-        this.rowsVis  = num("data-rows", 40);
-        this.B        = num("data-b", 4.2);             // r = B * θ
-        this.boot     = num("data-boot", 3000);         // ms before morph ends
-        this.cxPct    = Math.min(1, Math.max(0, num("data-centerx", 0.5)));
-        this.cyPct    = Math.min(1, Math.max(0, num("data-centery", 0.58)));
-        this.vIntro   = Math.max(0, num("data-introspd", 0.00001)); // rad/s
-        this.vFinal   = Math.max(0, num("data-finalspd", 0.00100)); // rad/s
-        this.debugHUD = !!(this.getAttribute("data-debug") ?? this.dataset.debug);
-
-        // tight line (no spaces)
-        this.line = (this.words.join("•") + "•").replace(/ /g, "");
+        // build line
+        const line = (this.words.join("•") + "•").replace(/ /g,"");
 
         // canvas
-        this.canvas = document.createElement("canvas");
-        this.ctx = this.canvas.getContext("2d");
-        this.style.display = "block";
-        this.appendChild(this.canvas);
+        const c = document.createElement("canvas");
+        const ctx = c.getContext("2d");
+        this.appendChild(c);
 
-        // init
-        this.__version = "inline-r13";
-        this._resize = this._resize.bind(this);
-        window.addEventListener("resize", this._resize, { passive:true });
-        this._resize();
+        // size
+        const resize = () => {
+          const dpr = Math.max(1, devicePixelRatio||1);
+          c.width  = Math.floor(innerWidth * dpr);
+          c.height = Math.floor(innerHeight * dpr);
+          c.style.width = innerWidth+"px";
+          c.style.height= innerHeight+"px";
+          ctx.setTransform(dpr,0,0,dpr,0,0);
 
-        this.start = performance.now();
-        this._prevT = this.start;
-        requestAnimationFrame(this._tick.bind(this));
-      }
-      disconnectedCallback(){ window.removeEventListener("resize", this._resize); }
+          this.cx = innerWidth*CENTER_X;
+          this.cy = innerHeight*CENTER_Y;
 
-      _resize() {
-        const dpr = Math.max(1, window.devicePixelRatio || 1);
-        this.W = this.canvas.width  = Math.floor(innerWidth  * dpr);
-        this.H = this.canvas.height = Math.floor(innerHeight * dpr);
-        this.canvas.style.width  = innerWidth + "px";
-        this.canvas.style.height = innerHeight + "px";
-        this.ctx.setTransform(dpr,0,0,dpr,0,0);
+          // font & cell sanity (ensure glyph fits)
+          this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
+          ctx.font = `${this.fontPx}px "Courier New", monospace`;
+          const mw = Math.ceil(ctx.measureText("M").width)+2;
+          this.cellW = Math.max(CELL_W, mw);
+          this.cellH = CELL_H;
 
-        // centre
-        this.cx = innerWidth  * this.cxPct;
-        this.cy = innerHeight * this.cyPct;
+          this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
+          this.rows = Math.max(1, ROWS);
+          this.N = Math.min(this.cols*this.rows, 12000);
 
-        // font & cell sanity
-        this.fontPx = Math.max(10, Math.floor(this.cellH * 0.61));
-        this.ctx.font = `${this.fontPx}px "Courier New", monospace`;
-        const mW = Math.ceil(this.ctx.measureText("M").width) + 2;
-        if (this.cellW < mW) this.cellW = mW;
+          const maxR = Math.hypot(Math.max(this.cx, innerWidth - this.cx),
+                                  Math.max(this.cy, innerHeight - this.cy)) + 60;
+          this.maxTheta = maxR / B;
 
-        // grid
-        this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
-        this.rows = Math.max(1, this.rowsVis);
-        this.N    = Math.min(this.cols * this.rows, 12000);
+          this.theta = new Float32Array(this.N);
+          for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
-        const maxR = Math.hypot(Math.max(this.cx, innerWidth - this.cx),
-                                Math.max(this.cy, innerHeight - this.cy)) + 60;
-        this.maxTheta = maxR / this.B;
-
-        // θ inner→outer
-        this.theta = new Float32Array(this.N);
-        for (let i = 0; i < this.N; i++) this.theta[i] = (i / this.N) * this.maxTheta;
-
-        // fixed matrix mapping
-        this.rcRow = new Int16Array(this.N);
-        this.rcCol = new Int16Array(this.N);
-        let k = 0;
-        for (let r = 0; r < this.rows && k < this.N; r++) {
-          for (let c = 0; c < this.cols && k < this.N; c++, k++) {
-            this.rcRow[k] = r; this.rcCol[k] = c;
+          this.rcRow = new Int16Array(this.N);
+          this.rcCol = new Int16Array(this.N);
+          let k=0;
+          for (let r=0;r<this.rows && k<this.N;r++){
+            for (let c=0;c<this.cols && k<this.N;c++,k++){
+              this.rcRow[k]=r; this.rcCol[k]=c;
+            }
           }
-        }
+          this.occ = new Uint8Array(this.cols*this.rows);
+        };
+        addEventListener("resize", resize, {passive:true}); resize();
 
-        // per-frame occupancy
-        this.occ = new Uint8Array(this.cols * this.rows);
-      }
+        const ease = t => t<.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
+        const halfRowsH = () => (ROWS*this.cellH)/2;
 
-      _easeInOut(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+        this.__version = VERSION;
+        let start = performance.now(), prev = start;
 
-      _tick(now) {
-        const dt = Math.min(1/20, Math.max(0, (now - this._prevT) / 1000)); // seconds
-        this._prevT = now;
+        const tick = (now) => {
+          const dt = Math.min(1/20, Math.max(0,(now-prev)/1000)); prev=now;
 
-        const ctx = this.ctx;
-        ctx.clearRect(0,0,innerWidth,innerHeight);
-        ctx.fillStyle   = "#d7e0ee";
-        ctx.font        = `${this.fontPx}px "Courier New", monospace`;
-        ctx.textAlign   = "center";
-        ctx.textBaseline= "middle";
+          ctx.clearRect(0,0,innerWidth,innerHeight);
+          ctx.fillStyle   = "#d7e0ee";
+          ctx.font        = `${this.fontPx}px "Courier New", monospace`;
+          ctx.textAlign   = "center";
+          ctx.textBaseline= "middle";
 
-        // morph 0→1 after boot (3s), eased
-        const morphRaw = Math.min(1, Math.max(0, (now - this.start - this.boot) / 1200));
-        const morph    = this._easeInOut(morphRaw);
+          const mRaw = Math.min(1, Math.max(0,(now - start - BOOT_MS)/1200));
+          const morph = ease(mRaw);
 
-        // ABSOLUTE speeds (rad/s) – no hidden multipliers
-        const speedNow = this.vIntro + (this.vFinal - this.vIntro) * morph;
+          // absolute speed (no multipliers, no attributes)
+          const speedNow = SPEED_INTRO + (SPEED_FINAL - SPEED_INTRO) * morph;
 
-        // reset occupancy
-        this.occ.fill(0);
+          this.occ.fill(0);
+          const hrh = halfRowsH();
 
-        const halfRowsH = (this.rowsVis * this.cellH) / 2;
-        const line = this.line;
+          for (let i=0;i<this.N;i++){
+            let t=this.theta[i];
+            if (t>this.maxTheta){ t-=this.maxTheta; this.theta[i]=t; }
+            const r = B*t;
 
-        // inner→outer, one glyph per cell
-        for (let i = 0; i < this.N; i++) {
-          let t = this.theta[i];
-          if (t > this.maxTheta) { t -= this.maxTheta; this.theta[i] = t; }
-          const r = this.B * t;
+            const sx = this.cx + r*Math.cos(t);
+            const sy = this.cy + r*Math.sin(t);
 
-          const sx = this.cx + r * Math.cos(t);
-          const sy = this.cy + r * Math.sin(t);
+            const rx = (this.rcCol[i]+0.5)*this.cellW;
+            const ry = (this.rcRow[i]+0.5)*this.cellH + (this.cy - hrh);
 
-          const rx = (this.rcCol[i] + 0.5) * this.cellW;
-          const ry = (this.rcRow[i] + 0.5) * this.cellH + (this.cy - halfRowsH);
+            let x = rx*(1-morph) + sx*morph;
+            let y = ry*(1-morph) + sy*morph;
 
-          let x = rx * (1 - morph) + sx * morph;
-          let y = ry * (1 - morph) + sy * morph;
+            const ci = Math.round(x/this.cellW);
+            const ri = Math.round(y/this.cellH);
+            if (ci<0 || ci>=this.cols || ri<0 || ri>=this.rows){ this.theta[i]=t+speedNow*dt; continue; }
 
-          const ci = Math.round(x / this.cellW);
-          const ri = Math.round(y / this.cellH);
-          if (ci < 0 || ci >= this.cols || ri < 0 || ri >= this.rows) {
-            this.theta[i] = t + speedNow * dt; continue;
+            const key = ri*this.cols+ci;
+            if (this.occ[key]){ this.theta[i]=t+speedNow*dt; continue; }
+            this.occ[key]=1;
+
+            const px = ci*this.cellW;
+            const py = ri*this.cellH;
+            const ch = line.charAt((i + (Math.floor(now*0.06) % line.length)) % line.length) || "•";
+            ctx.fillText(ch, px, py);
+
+            this.theta[i] = t + speedNow*dt; // time-based
           }
 
-          const key = ri * this.cols + ci;
-          if (this.occ[key]) { this.theta[i] = t + speedNow * dt; continue; }
-          this.occ[key] = 1;
-
-          const px = ci * this.cellW;
-          const py = ri * this.cellH;
-          const ch = line.charAt((i + (Math.floor(now * 0.06) % line.length)) % line.length) || "•";
-          ctx.fillText(ch, px, py);
-
-          this.theta[i] = t + speedNow * dt; // time-based advance
-        }
-
-        // optional debug HUD
-        if ((this.getAttribute("data-debug") ?? "0") !== "0") {
+          // tiny HUD to verify live build & speed
           ctx.save();
-          ctx.fillStyle = "rgba(2,6,23,.6)";
-          ctx.fillRect(8, 8, 250, 54);
-          ctx.fillStyle = "#cbd5e1";
-          ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
-          ctx.textAlign = "left"; ctx.textBaseline = "top";
-          ctx.fillText(`vortex ${this.__version}`, 16, 14);
-          ctx.fillText(`morph=${morph.toFixed(2)} speed=${speedNow.toFixed(5)} rad/s`, 16, 30);
-          ctx.fillText(`cells=${this.cols}×${this.rows}`, 16, 46);
+          ctx.fillStyle="rgba(2,6,23,.6)"; ctx.fillRect(8,8,260,54);
+          ctx.fillStyle="#cbd5e1"; ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace";
+          ctx.textAlign="left"; ctx.textBaseline="top";
+          ctx.fillText(this.__version, 16,14);
+          ctx.fillText(`morph=${morph.toFixed(2)} speed=${speedNow.toFixed(6)} rad/s`,16,30);
           ctx.restore();
-        }
 
-        requestAnimationFrame(this._tick.bind(this));
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
       }
     }
-    customElements.define("vortex-text", VortexText);
+    if (!customElements.get('vortex-ultraslow')) {
+      customElements.define('vortex-ultraslow', VortexUltraSlow);
+    }
   })();
   </script>
 </body>
