@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
 
-  <!-- Tailwind (optional polish). Page still looks fine if it fails to load. -->
+  <!-- Tailwind (optional polish) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -13,18 +13,27 @@
     html,body{height:100%}
     body{
       margin:0;
-      color:var(--ink);                  /* base text color so it's never “invisible” */
+      color:var(--ink);
       background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
       font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
     }
-    /* the effect sits behind everything */
+    /* vortex behind everything */
     vortex-text{ position:fixed; inset:0; z-index:0; pointer-events:none; display:block; }
-    /* content sits above */
-    .content-layer{ position:relative; z-index:10; }
+
     /* faint scanlines */
     .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:1;
-      background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0px, rgba(255,255,255,.03) 1px, transparent 1px, transparent 3px);
+      background-image:repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,.03) 0px,
+        rgba(255,255,255,.03) 1px,
+        transparent 1px,
+        transparent 3px
+      );
     }
+
+    /* content above */
+    .content-layer{ position:relative; z-index:10; }
+
     .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px); }
     .pill.primary{ background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.3); }
     .pill.primary:hover{ background:rgba(16,185,129,.28); }
@@ -37,19 +46,28 @@
 </head>
 
 <body>
-  <!-- canvas effect -->
-  <vortex-text data-words="TRAJECTORY,PROPULSION,Δv,CFD,REENTRY,ORBITAL,STARSHIP,MARS,SPICE,ROVER,SCRAMJET,UAV"
-               data-cellw="6" data-cellh="18" data-rows="44" data-b="4.2" data-speed="0.022" data-boot="900"></vortex-text>
+  <!--
+    Bigger cells (12×36) = 2× text size.
+    3s boot delay.
+    Center Y pushed lower (58% of screen) so the hero sits higher than the final spiral.
+  -->
+  <vortex-text
+    data-words="TRAJECTORY,PROPULSION,Δv,CFD,REENTRY,ORBITAL,STARSHIP,MARS,SPICE,ROVER,SCRAMJET,UAV"
+    data-cellw="12" data-cellh="36"
+    data-rows="40" data-b="4.2" data-speed="0.022"
+    data-boot="3000"
+    data-centerx="0.5" data-centery="0.58">
+  </vortex-text>
   <div class="scanlines"></div>
 
   <!-- NAV -->
-  <header class="content-layer" style="position:fixed;inset-inline:0;top:0;">
+  <header class="content-layer fixed top-0 inset-x-0">
     <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
       <div class="flex items-center gap-3">
-        <span style="display:inline-block;width:32px;height:32px;border-radius:12px;background:#10b981"></span>
+        <span class="block w-8 h-8 rounded-xl" style="background:#10b981"></span>
         <strong>Jack Emmerson</strong>
       </div>
-      <div class="space-x-6" style="color:#cbd5e1">
+      <div class="space-x-6 text-slate-300">
         <a href="index.html">Jack</a>
         <a href="tools.html">Tools</a>
         <a href="shop.html">Shop</a>
@@ -57,24 +75,24 @@
     </nav>
   </header>
 
-  <!-- HERO -->
-  <main class="content-layer" style="min-height:100vh; display:grid; place-items:center; padding:6rem 1.5rem 2rem;">
-    <section style="text-align:center; max-width:48rem">
+  <!-- HERO (raised higher than spiral centre) -->
+  <main class="content-layer min-h-screen grid place-items-center px-6 pt-24">
+    <section class="text-center max-w-2xl" style="transform:translateY(-12vh)" data-reveal>
       <h1 class="text-6xl md:text-7xl font-extrabold"
           style="background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9); -webkit-background-clip:text; background-clip:text; color:transparent;">
         Designing&nbsp;Tomorrow
       </h1>
-      <p style="margin-top:1.25rem; color:var(--muted); font-size:1.125rem">
+      <p class="mt-6 text-lg" style="color:var(--muted)">
         Aerospace engineering, CFD wizardry &amp; orbital mechanics — built in public.
       </p>
-      <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center">
-        <a class="pill primary" href="tools.html">Explore Tools</a>
-        <a class="pill ghost" href="mailto:sidwellcourtney@gmail.com">Contact</a>
+      <div class="mt-10 flex gap-4 justify-center">
+        <a href="tools.html" class="pill primary">Explore Tools</a>
+        <a href="mailto:sidwellcourtney@gmail.com" class="pill ghost">Contact</a>
       </div>
     </section>
   </main>
 
-  <footer class="content-layer" style="text-align:center; color:#94a3b8; font-size:.875rem; padding:2rem 0">
+  <footer class="content-layer text-center text-slate-500 text-sm py-8">
     © 2025 Jack Emmerson
   </footer>
 </body>
