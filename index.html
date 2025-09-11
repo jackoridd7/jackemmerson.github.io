@@ -2,30 +2,108 @@
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Tailwind (no build step) -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
-
-  <!-- Smooth site libs (CDN) -->
-  <script defer src="https://unpkg.com/@swup/core@4"></script>
-  <script defer src="https://unpkg.com/@swup/preload-plugin@3"></script>
-  <script defer src="https://unpkg.com/@studio-freight/lenis@1.0.35/bundled/lenis.min.js"></script>
-
-  <!-- Your app scripts -->
-  <script defer src="assets/smooth.js"></script>
-  <script defer src="assets/spiral-element.js"></script>
+  <!-- ✅ Correct Tailwind CDN (the old link may be why you saw a blank page) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // optional: tweak tailwind if you want
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['"Courier New"', 'monospace'] }}}}
+  </script>
 
   <style>
-    /* deep-space backdrop */
-    body { background: radial-gradient(#0f172a 20%, #020617 80%); }
+    :root { --bg1:#0f172a; --bg2:#020617; --ink:#94a3b8; }
 
-    /* Swup crossfade */
-    .transition-fade { opacity: 1; transition: opacity .35s ease; }
-    html.is-animating .transition-fade { opacity: 0; }
+    body{
+      background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
+      opacity: 0;                 /* site fade-in, enabled by site.js */
+      transition: opacity .6s ease;
+    }
 
-    /* put hero above the swirl canvas */
-    spiral-text { position:fixed; inset:0; z-index:0; pointer-events:none; }
+    /* Place the vortex behind all content */
+    vortex-text{position:fixed; inset:0; z-index:0; pointer-events:none;}
 
-    /* faint scan-lines like Midjourney (drawn on top of
+    /* Content sits above */
+    .content-layer{ position:relative; z-index:10; }
+
+    /* Buttons “site-builder” style */
+    .pill{
+      @apply px-8 py-3 rounded-full ring-1 backdrop-blur transition;
+    }
+  </style>
+
+  <script defer src="assets/site.js"></script>
+  <script defer src="assets/vortex.js"></script>
+</head>
+
+<body class="text-slate-100 font-sans leading-relaxed">
+
+  <!-- The animated custom element -->
+  <vortex-text
+    cellw="6"
+    cellh="18"
+    rows="44"
+    speed="0.022"
+    b="4.2"
+    boot="900"      <!-- ms to show rows before morph -->
+  ></vortex-text>
+
+  <!-- NAV -->
+  <header class="content-layer fixed top-0 inset-x-0">
+    <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
+      <div class="flex items-center gap-3">
+        <span class="inline-block h-8 w-8 rounded-xl bg-emerald-400"></span>
+        <span class="font-semibold tracking-wide">Jack Emmerson</span>
+      </div>
+      <div class="space-x-6 text-slate-300">
+        <a href="index.html" class="hover:text-emerald-300">Jack</a>
+        <a href="tools.html" class="hover:text-emerald-300">Tools</a>
+        <a href="shop.html"  class="hover:text-emerald-300">Shop</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <main class="content-layer min-h-screen grid place-items-center px-6 pt-24">
+    <section class="text-center max-w-2xl" data-reveal>
+      <h1 class="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-400 bg-clip-text text-transparent">
+        Designing&nbsp;Tomorrow
+      </h1>
+      <p class="mt-6 text-lg text-slate-400">
+        Aerospace engineering, CFD wizardry &amp; orbital mechanics — built in public.
+      </p>
+      <div class="mt-10 flex gap-4 justify-center">
+        <a href="tools.html"
+           class="pill bg-emerald-400/20 text-emerald-300 ring-emerald-400/30 hover:bg-emerald-400/30">
+          Explore Tools
+        </a>
+        <a href="mailto:sidwellcourtney@gmail.com"
+           class="pill bg-white/10 text-slate-200 ring-white/20 hover:bg-white/20">
+          Contact
+        </a>
+      </div>
+    </section>
+
+    <!-- Example section to show smooth reveals -->
+    <section class="content-layer max-w-5xl mx-auto grid md:grid-cols-3 gap-6 px-2 pb-24">
+      <article class="bg-white/5 ring-1 ring-white/10 rounded-2xl p-6" data-reveal>
+        <h3 class="font-semibold mb-1">CFD</h3>
+        <p class="text-slate-400 text-sm">Numerics, turbulence models, and viz.</p>
+      </article>
+      <article class="bg-white/5 ring-1 ring-white/10 rounded-2xl p-6" data-reveal>
+        <h3 class="font-semibold mb-1">Orbital</h3>
+        <p class="text-slate-400 text-sm">Δv budgeting, Hohmanns, patched conics.</p>
+      </article>
+      <article class="bg-white/5 ring-1 ring-white/10 rounded-2xl p-6" data-reveal>
+        <h3 class="font-semibold mb-1">Avionics</h3>
+        <p class="text-slate-400 text-sm">Micro-UAV guidance &amp; control.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="content-layer text-center text-slate-500 text-sm py-8">
+    &copy; 2025 Jack Emmerson
+  </footer>
+</body>
+</html>
