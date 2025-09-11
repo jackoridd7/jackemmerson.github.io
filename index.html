@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
 
-  <!-- Tailwind (optional polish). Page still looks fine if this fails to load. -->
+  <!-- Tailwind (optional). Page still looks fine if this fails. -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -13,13 +13,13 @@
     html,body{height:100%}
     body{
       margin:0;
-      color:var(--ink); /* fallback color so text is never invisible */
+      color:var(--ink);
       background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
       font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
     }
     /* Vortex sits behind everything */
     vortex-text{ position:fixed; inset:0; z-index:0; pointer-events:none; display:block; }
-    /* Faint scanlines (like Midjourney) */
+    /* Faint scanlines */
     .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:1;
       background-image:repeating-linear-gradient(
         to bottom,
@@ -31,7 +31,7 @@
     }
     /* Content above the effect */
     .content-layer{ position:relative; z-index:10; }
-    /* Nice buttons */
+    /* Buttons */
     .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15);
            backdrop-filter:saturate(180%) blur(6px); }
     .pill.primary{ background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.30); }
@@ -39,28 +39,21 @@
     .pill.ghost{ background:rgba(255,255,255,.08); color:#e5e7eb; }
     .pill.ghost:hover{ background:rgba(255,255,255,.16); }
   </style>
-
-  <!-- Smooth page niceties (optional) -->
-  <script defer src="assets/site.js"></script>
-  <!-- Cache-busted to force latest vortex build -->
-  <script defer src="assets/vortex.js?v=r11"></script>
 </head>
 
 <body>
 
   <!-- Canvas vortex (grid-snapped, one letter per cell).
-       Slower: very low intro speed + slow final spiral.
-       Centre pushed down so hero sits higher than the spiral centre. -->
+       Center pushed down so hero sits higher than spiral centre. -->
   <vortex-text
     data-words="TRAJECTORY,PROPULSION,Δv,CFD,REENTRY,ORBITAL,STARSHIP,MARS,SPICE,ROVER,SCRAMJET,UAV"
     data-cellw="12" data-cellh="36"
     data-rows="40" data-b="4.2"
     data-centerx="0.5" data-centery="0.58"
     data-boot="3000"
-    data-speed="0.040"   <!-- base speed in rad/s -->
-    data-intro="0.00005" <!-- 0.05% of base during intro (~super slow) -->
-    data-final="0.015"   <!-- 15% of base after morph (slow vortex) -->
-    data-debug="0"      <!-- set to 1 to show the small speed/morph HUD -->
+    data-introspd="0.00001"  <!-- rad/s during intro (~still) -->
+    data-finalspd="0.00100"  <!-- rad/s after morph (very slow) -->
+    data-debug="0"
   ></vortex-text>
   <div class="scanlines"></div>
 
@@ -101,5 +94,171 @@
     © 2025 Jack Emmerson
   </footer>
 
+  <!-- INLINE vortex implementation (no external JS; version inline-r13) -->
+  <script>
+  (function(){
+    class VortexText extends HTMLElement {
+      connectedCallback() {
+        const num = (k, d) => +((this.getAttribute(k) ?? this.dataset[k]) ?? d);
+        const str = (k, d) => (this.getAttribute(k) ?? this.dataset[k] ?? d);
+
+        // config – speeds are ABSOLUTE in rad/s (no base multiplier)
+        this.words    = str("data-words", "CFD,Δv,ORBITAL").split(",").map(s=>s.trim());
+        this.cellW    = num("data-cellw", 12);
+        this.cellH    = num("data-cellh", 36);
+        this.rowsVis  = num("data-rows", 40);
+        this.B        = num("data-b", 4.2);             // r = B * θ
+        this.boot     = num("data-boot", 3000);         // ms before morph ends
+        this.cxPct    = Math.min(1, Math.max(0, num("data-centerx", 0.5)));
+        this.cyPct    = Math.min(1, Math.max(0, num("data-centery", 0.58)));
+        this.vIntro   = Math.max(0, num("data-introspd", 0.00001)); // rad/s
+        this.vFinal   = Math.max(0, num("data-finalspd", 0.00100)); // rad/s
+        this.debugHUD = !!(this.getAttribute("data-debug") ?? this.dataset.debug);
+
+        // tight line (no spaces)
+        this.line = (this.words.join("•") + "•").replace(/ /g, "");
+
+        // canvas
+        this.canvas = document.createElement("canvas");
+        this.ctx = this.canvas.getContext("2d");
+        this.style.display = "block";
+        this.appendChild(this.canvas);
+
+        // init
+        this.__version = "inline-r13";
+        this._resize = this._resize.bind(this);
+        window.addEventListener("resize", this._resize, { passive:true });
+        this._resize();
+
+        this.start = performance.now();
+        this._prevT = this.start;
+        requestAnimationFrame(this._tick.bind(this));
+      }
+      disconnectedCallback(){ window.removeEventListener("resize", this._resize); }
+
+      _resize() {
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        this.W = this.canvas.width  = Math.floor(innerWidth  * dpr);
+        this.H = this.canvas.height = Math.floor(innerHeight * dpr);
+        this.canvas.style.width  = innerWidth + "px";
+        this.canvas.style.height = innerHeight + "px";
+        this.ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        // centre
+        this.cx = innerWidth  * this.cxPct;
+        this.cy = innerHeight * this.cyPct;
+
+        // font & cell sanity
+        this.fontPx = Math.max(10, Math.floor(this.cellH * 0.61));
+        this.ctx.font = `${this.fontPx}px "Courier New", monospace`;
+        const mW = Math.ceil(this.ctx.measureText("M").width) + 2;
+        if (this.cellW < mW) this.cellW = mW;
+
+        // grid
+        this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
+        this.rows = Math.max(1, this.rowsVis);
+        this.N    = Math.min(this.cols * this.rows, 12000);
+
+        const maxR = Math.hypot(Math.max(this.cx, innerWidth - this.cx),
+                                Math.max(this.cy, innerHeight - this.cy)) + 60;
+        this.maxTheta = maxR / this.B;
+
+        // θ inner→outer
+        this.theta = new Float32Array(this.N);
+        for (let i = 0; i < this.N; i++) this.theta[i] = (i / this.N) * this.maxTheta;
+
+        // fixed matrix mapping
+        this.rcRow = new Int16Array(this.N);
+        this.rcCol = new Int16Array(this.N);
+        let k = 0;
+        for (let r = 0; r < this.rows && k < this.N; r++) {
+          for (let c = 0; c < this.cols && k < this.N; c++, k++) {
+            this.rcRow[k] = r; this.rcCol[k] = c;
+          }
+        }
+
+        // per-frame occupancy
+        this.occ = new Uint8Array(this.cols * this.rows);
+      }
+
+      _easeInOut(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+
+      _tick(now) {
+        const dt = Math.min(1/20, Math.max(0, (now - this._prevT) / 1000)); // seconds
+        this._prevT = now;
+
+        const ctx = this.ctx;
+        ctx.clearRect(0,0,innerWidth,innerHeight);
+        ctx.fillStyle   = "#d7e0ee";
+        ctx.font        = `${this.fontPx}px "Courier New", monospace`;
+        ctx.textAlign   = "center";
+        ctx.textBaseline= "middle";
+
+        // morph 0→1 after boot (3s), eased
+        const morphRaw = Math.min(1, Math.max(0, (now - this.start - this.boot) / 1200));
+        const morph    = this._easeInOut(morphRaw);
+
+        // ABSOLUTE speeds (rad/s) – no hidden multipliers
+        const speedNow = this.vIntro + (this.vFinal - this.vIntro) * morph;
+
+        // reset occupancy
+        this.occ.fill(0);
+
+        const halfRowsH = (this.rowsVis * this.cellH) / 2;
+        const line = this.line;
+
+        // inner→outer, one glyph per cell
+        for (let i = 0; i < this.N; i++) {
+          let t = this.theta[i];
+          if (t > this.maxTheta) { t -= this.maxTheta; this.theta[i] = t; }
+          const r = this.B * t;
+
+          const sx = this.cx + r * Math.cos(t);
+          const sy = this.cy + r * Math.sin(t);
+
+          const rx = (this.rcCol[i] + 0.5) * this.cellW;
+          const ry = (this.rcRow[i] + 0.5) * this.cellH + (this.cy - halfRowsH);
+
+          let x = rx * (1 - morph) + sx * morph;
+          let y = ry * (1 - morph) + sy * morph;
+
+          const ci = Math.round(x / this.cellW);
+          const ri = Math.round(y / this.cellH);
+          if (ci < 0 || ci >= this.cols || ri < 0 || ri >= this.rows) {
+            this.theta[i] = t + speedNow * dt; continue;
+          }
+
+          const key = ri * this.cols + ci;
+          if (this.occ[key]) { this.theta[i] = t + speedNow * dt; continue; }
+          this.occ[key] = 1;
+
+          const px = ci * this.cellW;
+          const py = ri * this.cellH;
+          const ch = line.charAt((i + (Math.floor(now * 0.06) % line.length)) % line.length) || "•";
+          ctx.fillText(ch, px, py);
+
+          this.theta[i] = t + speedNow * dt; // time-based advance
+        }
+
+        // optional debug HUD
+        if ((this.getAttribute("data-debug") ?? "0") !== "0") {
+          ctx.save();
+          ctx.fillStyle = "rgba(2,6,23,.6)";
+          ctx.fillRect(8, 8, 250, 54);
+          ctx.fillStyle = "#cbd5e1";
+          ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+          ctx.textAlign = "left"; ctx.textBaseline = "top";
+          ctx.fillText(`vortex ${this.__version}`, 16, 14);
+          ctx.fillText(`morph=${morph.toFixed(2)} speed=${speedNow.toFixed(5)} rad/s`, 16, 30);
+          ctx.fillText(`cells=${this.cols}×${this.rows}`, 16, 46);
+          ctx.restore();
+        }
+
+        requestAnimationFrame(this._tick.bind(this));
+      }
+    }
+    customElements.define("vortex-text", VortexText);
+  })();
+  </script>
 </body>
 </html>
