@@ -106,7 +106,7 @@ class VortexText extends HTMLElement {
 
     // SPEED PROFILE (tweak here)
     // Intro: 0.2% of base speed, Final vortex: 50% of base speed
-    const INTRO = 0.002, FINAL = 0.50;
+    const INTRO = 0.0002, FINAL = 0.0050;
     const speedScale = INTRO + (FINAL - INTRO) * morph;   // 0.002→0.50
     const speedNow   = this.speed * speedScale;           // rad/second
 
