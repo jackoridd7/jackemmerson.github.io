@@ -5,91 +5,27 @@
   <title>Jack Emmerson – Designing Tomorrow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Tailwind (CDN) -->
+  <!-- Tailwind (no build step) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
 
+  <!-- Smooth site libs (CDN) -->
+  <script defer src="https://unpkg.com/@swup/core@4"></script>
+  <script defer src="https://unpkg.com/@swup/preload-plugin@3"></script>
+  <script defer src="https://unpkg.com/@studio-freight/lenis@1.0.35/bundled/lenis.min.js"></script>
+
+  <!-- Your app scripts -->
+  <script defer src="assets/smooth.js"></script>
+  <script defer src="assets/spiral-element.js"></script>
+
   <style>
-    body {background: radial-gradient(#0f172a 20%, #020617 80%);}
+    /* deep-space backdrop */
+    body { background: radial-gradient(#0f172a 20%, #020617 80%); }
 
-    /*— animated field —*/
-    #field {position:fixed; inset:0; pointer-events:none; overflow:hidden;}
+    /* Swup crossfade */
+    .transition-fade { opacity: 1; transition: opacity .35s ease; }
+    html.is-animating .transition-fade { opacity: 0; }
 
-    .char{
-      position:absolute;
-      width:6px; height:18px;             /* grid cell */
-      font:11px/18px "Courier New", monospace;
-      font-weight:500;
-      color:#94a3b8;
-      text-align:center;
-      transform:translate(-50%,-50%);      /* centre in cell */
-      will-change:transform,left,top;
-    }
+    /* put hero above the swirl canvas */
+    spiral-text { position:fixed; inset:0; z-index:0; pointer-events:none; }
 
-    /* scan-line overlay */
-    #field::after{
-      content:""; position:fixed; inset:0; pointer-events:none; z-index:1;
-      background-image:repeating-linear-gradient(
-          to bottom,
-          rgba(255,255,255,0.03) 0px,
-          rgba(255,255,255,0.03) 1px,
-          transparent 1px,
-          transparent 3px
-      );
-    }
-  </style>
-
-  <script defer src="assets/site.js"></script>
-  <script defer src="assets/spiral.js"></script>
-</head>
-
-<body class="text-slate-100 font-sans leading-relaxed">
-
-  <!-- NAV -->
-  <header class="fixed top-0 inset-x-0 z-20">
-    <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
-      <div class="flex items-center gap-3">
-        <img src="assets/logo.svg" alt="logo" class="h-8 w-8" />
-        <span class="font-semibold tracking-wide">Jack Emmerson</span>
-      </div>
-      <div class="space-x-6 text-slate-300">
-        <a data-tab="jack"  href="index.html"  class="nav-link hover:text-emerald-300">Jack</a>
-        <a data-tab="tools" href="tools.html" class="nav-link hover:text-emerald-300">Tools</a>
-        <a data-tab="shop"  href="shop.html"  class="nav-link hover:text-emerald-300">Shop</a>
-      </div>
-    </nav>
-  </header>
-
-  <div id="field"></div>
-
-  <section class="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-6 pt-24">
-    <h1 class="text-6xl md:text-7xl font-extrabold mb-4
-               bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-400
-               bg-clip-text text-transparent">
-      Designing&nbsp;Tomorrow
-    </h1>
-
-    <p class="max-w-xl text-lg text-slate-400 mb-10">
-      Aerospace engineering, CFD wizardry&nbsp;&amp; orbital mechanics – built in public.
-    </p>
-
-    <div class="flex gap-4">
-      <a href="tools.html"
-         class="px-8 py-3 rounded-full bg-emerald-400/20 text-emerald-300
-                ring-1 ring-emerald-400/30 backdrop-blur
-                hover:bg-emerald-400/30 transition">
-        Explore Tools
-      </a>
-      <a href="mailto:sidwellcourtney@gmail.com"
-         class="px-8 py-3 rounded-full bg-white/10 text-slate-200
-                ring-1 ring-white/20 backdrop-blur
-                hover:bg-white/20 transition">
-        Contact
-      </a>
-    </div>
-  </section>
-
-  <footer class="relative z-10 text-center text-slate-500 text-sm py-6">
-    &copy; 2025 Jack Emmerson
-  </footer>
-</body>
-</html>
+    /* faint scan-lines like Midjourney (drawn on top of
