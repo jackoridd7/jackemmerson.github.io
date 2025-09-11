@@ -1,24 +1,23 @@
-// Canvas-based, grid-snapped spiral with cell-level de-dup.
-// • VERY slow drift during the first 3s (ramps up after).
-// • Each frame, at most ONE glyph is drawn per grid cell.
+// Canvas-based vortex with cell-level de-duplication and very slow intro.
+// One letter max per grid cell; inner -> outer fill; upright characters.
 
 class VortexText extends HTMLElement {
   connectedCallback() {
     const num = (k, d) => +((this.getAttribute(k) ?? this.dataset[k]) ?? d);
     const str = (k, d) => (this.getAttribute(k) ?? this.dataset[k] ?? d);
 
-    // —— Config (matches your index.html attributes) ——
+    // Config (matches your <vortex-text ...> attributes)
     this.words   = str("data-words", "CFD,Δv,ORBITAL").split(",").map(s=>s.trim());
     this.cellW   = num("data-cellw", 12);
     this.cellH   = num("data-cellh", 36);
-    this.rows    = num("data-rows", 40);
-    this.B       = num("data-b", 4.2);            // r = B * θ
-    this.speed   = num("data-speed", 0.022);      // radians/frame at full speed
-    this.boot    = num("data-boot", 3000);        // ms of rows→spiral morph window
+    this.rowsVis = num("data-rows", 40);         // visible rows baseline
+    this.B       = num("data-b", 4.2);           // r = B * θ
+    this.speed   = num("data-speed", 0.022);     // radians/frame at full speed
+    this.boot    = num("data-boot", 3000);       // ms before morph completes
     this.centerX = Math.min(1, Math.max(0, num("data-centerx", 0.5)));
     this.centerY = Math.min(1, Math.max(0, num("data-centery", 0.58)));
 
-    // tighter rows: bullets without spaces
+    // Tight line: bullets without spaces
     this.line = (this.words.join("•") + "•").replace(/ /g, "");
 
     // Canvas
@@ -27,7 +26,7 @@ class VortexText extends HTMLElement {
     this.style.display = "block";
     this.appendChild(this.canvas);
 
-    // Init + kick off loop
+    // Init
     this._resize = this._resize.bind(this);
     window.addEventListener("resize", this._resize, { passive:true });
     this._resize();
@@ -35,6 +34,7 @@ class VortexText extends HTMLElement {
     this.start = performance.now();
     requestAnimationFrame(this._tick.bind(this));
   }
+
   disconnectedCallback(){ window.removeEventListener("resize", this._resize); }
 
   _resize() {
@@ -45,37 +45,45 @@ class VortexText extends HTMLElement {
     this.canvas.style.height = innerHeight + "px";
     this.ctx.setTransform(dpr,0,0,dpr,0,0);
 
-    // centre (as % of viewport)
+    // Where the spiral centres
     this.cx = innerWidth  * this.centerX;
     this.cy = innerHeight * this.centerY;
 
-    // Font tied to cellH (keeps your 2× sizing)
+    // Font size tied to cell height
     this.fontPx = Math.max(10, Math.floor(this.cellH * 0.61));
     this.ctx.font = `${this.fontPx}px "Courier New", monospace`;
 
-    // widen cell if glyphs would overlap (keeps text legible)
+    // Ensure cells are wide enough for glyphs -> legible
     const mW = Math.ceil(this.ctx.measureText("M").width) + 2;
     if (this.cellW < mW) this.cellW = mW;
 
-    // radius needed to cover corners from chosen centre
+    // Grid dims + arrays
+    this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
+    this.rows = Math.max(1, this.rowsVis);
+    this.N    = Math.min(this.cols * this.rows, 12000);
+
+    // Max radius from chosen centre to any corner
     this.maxR = Math.hypot(Math.max(this.cx, innerWidth - this.cx),
                            Math.max(this.cy, innerHeight - this.cy)) + 60;
 
-    // grid agents (cap for perf)
-    this.cols = Math.ceil(innerWidth / this.cellW);
-    const N = Math.min(this.rows * this.cols, 12000);
-
-    // deterministic theta distribution: dense inner core
-    this.theta  = new Float32Array(N);
+    // θ distribution (0..max), inner -> outer
     const maxTheta = this.maxR / this.B;
-    for (let i = 0; i < N; i++) this.theta[i] = (i / N) * maxTheta;
+    this.theta = new Float32Array(this.N);
+    for (let i = 0; i < this.N; i++) this.theta[i] = (i / this.N) * maxTheta;
 
-    // fixed matrix mapping
-    this.rowcol = new Array(N);
+    // Fixed matrix mapping (row/col for each agent)
+    this.rcRow = new Int16Array(this.N);
+    this.rcCol = new Int16Array(this.N);
     let k = 0;
-    for (let r = 0; r < this.rows; r++) {
-      for (let c = 0; c < this.cols && k < N; c++, k++) this.rowcol[k] = [c, r];
+    for (let r = 0; r < this.rows && k < this.N; r++) {
+      for (let c = 0; c < this.cols && k < this.N; c++, k++) {
+        this.rcRow[k] = r;
+        this.rcCol[k] = c;
+      }
     }
+
+    // Occupancy grid (one byte per cell)
+    this.occ = new Uint8Array(this.cols * this.rows);
   }
 
   _easeInOut(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
@@ -84,71 +92,72 @@ class VortexText extends HTMLElement {
     const ctx = this.ctx;
     ctx.clearRect(0,0,innerWidth,innerHeight);
 
-    // readable on the spiral
-    ctx.fillStyle   = "#cfd7e4";
+    // Crisp + bright enough to read over the spiral
+    ctx.fillStyle   = "#d7e0ee";
     ctx.font        = `${this.fontPx}px "Courier New", monospace`;
     ctx.textAlign   = "center";
     ctx.textBaseline= "middle";
 
-    // morph 0→1 after boot (3s), eased
-    const raw   = Math.min(1, Math.max(0, (now - this.start - this.boot) / 1200));
-    const morph = this._easeInOut(raw);
+    // Morph factor 0..1 after boot (3s) with easing
+    const morphRaw = Math.min(1, Math.max(0, (now - this.start - this.boot) / 1200));
+    const morph    = this._easeInOut(morphRaw);
 
-    // SUPER-slow start: 0.4% of full speed → 100% as morph completes
+    // Ultra-slow intro: 0.4% speed during first 3s; then ramp to 100%
     const speedNow = this.speed * (0.004 + 0.996 * morph);
 
-    const halfRowsH = (this.rows * this.cellH) / 2;
+    const halfRowsH = (this.rowsVis * this.cellH) / 2;
     const line = this.line;
 
-    // pass 1: compute snapped targets
-    const N = this.theta.length;
-    const items = new Array(N);
-    for (let i=0; i<N; i++) {
+    // reset occupancy for this frame
+    this.occ.fill(0);
+
+    // inner -> outer (θ grows with i)
+    for (let i = 0; i < this.N; i++) {
       let t = this.theta[i];
       let r = this.B * t;
 
-      // wrap for endless flow
+      // wrap to keep flowing
       if (r > this.maxR) {
         t -= (this.maxR / this.B);
         r  = this.B * t;
         this.theta[i] = t;
       }
 
-      // spiral position
+      // spiral coordinates
       const sx = this.cx + r * Math.cos(t);
       const sy = this.cy + r * Math.sin(t);
 
-      // initial row position (matrix)
-      const [c,row] = this.rowcol[i];
-      const rx = (c + 0.5) * this.cellW;
-      const ry = (row + 0.5) * this.cellH + (this.cy - halfRowsH);
+      // initial matrix position (rows field)
+      const rx = (this.rcCol[i] + 0.5) * this.cellW;
+      const ry = (this.rcRow[i] + 0.5) * this.cellH + (this.cy - halfRowsH);
 
-      // mix rows → spiral, then SNAP to grid
+      // mix rows → spiral
       let x = rx * (1 - morph) + sx * morph;
       let y = ry * (1 - morph) + sy * morph;
-      const ci = Math.round(x / this.cellW);
-      const ri = Math.round(y / this.cellH);
-      x = ci * this.cellW;
-      y = ri * this.cellH;
 
-      // glyph (upright)
-      const ch = line.charAt((i + (Math.floor(now*0.06) % line.length)) % line.length) || "•";
+      // snap to grid indices
+      let ci = Math.round(x / this.cellW);
+      let ri = Math.round(y / this.cellH);
 
-      // update θ for next frame
+      // clamp to grid bounds
+      if (ci < 0 || ci >= this.cols || ri < 0 || ri >= this.rows) {
+        this.theta[i] = t + speedNow;
+        continue;
+      }
+
+      // one-glyph-per-cell
+      const key = ri * this.cols + ci;
+      if (this.occ[key]) { this.theta[i] = t + speedNow; continue; }
+      this.occ[key] = 1;
+
+      // draw at cell center
+      const px = ci * this.cellW;
+      const py = ri * this.cellH;
+      const ch = line.charAt((i + (Math.floor(now * 0.06) % line.length)) % line.length) || "•";
+      ctx.fillText(ch, px, py);
+
+      // advance along spiral
       this.theta[i] = t + speedNow;
-
-      items[i] = { r, x, y, ci, ri, ch };
-    }
-
-    // pass 2: sort inner→outer, then draw with cell-level de-dup
-    items.sort((a,b)=> a.r - b.r);
-    const occupied = new Set();  // "ci,ri" keys
-
-    for (const it of items) {
-      const key = it.ci + "," + it.ri;
-      if (occupied.has(key)) continue;    // one glyph per grid cell
-      occupied.add(key);
-      ctx.fillText(it.ch, it.x, it.y);
     }
 
     requestAnimationFrame(this._tick.bind(this));
