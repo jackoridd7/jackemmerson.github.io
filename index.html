@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
 
-  <!-- Tailwind (optional polish) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -15,12 +14,9 @@
       margin:0;
       color:var(--ink);
       background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
-      font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
+      font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";
     }
-    /* vortex behind everything */
     vortex-text{ position:fixed; inset:0; z-index:0; pointer-events:none; display:block; }
-
-    /* faint scanlines */
     .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:1;
       background-image:repeating-linear-gradient(
         to bottom,
@@ -30,10 +26,7 @@
         transparent 3px
       );
     }
-
-    /* content above */
     .content-layer{ position:relative; z-index:10; }
-
     .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px); }
     .pill.primary{ background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.3); }
     .pill.primary:hover{ background:rgba(16,185,129,.28); }
@@ -47,15 +40,17 @@
 
 <body>
   <!--
-    Bigger cells (12×36) = 2× text size.
-    3s boot delay.
-    Center Y pushed lower (58% of screen) so the hero sits higher than the final spiral.
+    Keep big text (2×): 12×36 cells.
+    Fewer gaps: handled in JS (no spaces around the separator).
+    Slower intro slide: prespeed=3 px/s (very slow) during 3s boot.
+    Slightly tighter spiral (b=3.8) and brighter letters for visibility.
+    Spiral centre lower so hero sits higher.
   -->
   <vortex-text
     data-words="TRAJECTORY,PROPULSION,Δv,CFD,REENTRY,ORBITAL,STARSHIP,MARS,SPICE,ROVER,SCRAMJET,UAV"
     data-cellw="12" data-cellh="36"
-    data-rows="40" data-b="4.2" data-speed="0.022"
-    data-boot="3000"
+    data-rows="40" data-b="3.8" data-speed="0.022"
+    data-boot="3000" data-prespeed="3"
     data-centerx="0.5" data-centery="0.58">
   </vortex-text>
   <div class="scanlines"></div>
@@ -75,7 +70,7 @@
     </nav>
   </header>
 
-  <!-- HERO (raised higher than spiral centre) -->
+  <!-- HERO (raised above spiral centre) -->
   <main class="content-layer min-h-screen grid place-items-center px-6 pt-24">
     <section class="text-center max-w-2xl" style="transform:translateY(-12vh)" data-reveal>
       <h1 class="text-6xl md:text-7xl font-extrabold"
