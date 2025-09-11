@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
 
+  <!-- Tailwind (optional polish). Page still looks fine if this fails to load. -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -12,11 +13,13 @@
     html,body{height:100%}
     body{
       margin:0;
-      color:var(--ink);
+      color:var(--ink); /* fallback color so text is never invisible */
       background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
-      font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans";
+      font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
     }
+    /* Vortex sits behind everything */
     vortex-text{ position:fixed; inset:0; z-index:0; pointer-events:none; display:block; }
+    /* Faint scanlines (like Midjourney) */
     .scanlines{ position:fixed; inset:0; pointer-events:none; z-index:1;
       background-image:repeating-linear-gradient(
         to bottom,
@@ -26,40 +29,46 @@
         transparent 3px
       );
     }
+    /* Content above the effect */
     .content-layer{ position:relative; z-index:10; }
-    .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px); }
-    .pill.primary{ background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.3); }
+    /* Nice buttons */
+    .pill{ padding:.75rem 2rem; border-radius:9999px; border:1px solid rgba(255,255,255,.15);
+           backdrop-filter:saturate(180%) blur(6px); }
+    .pill.primary{ background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.30); }
     .pill.primary:hover{ background:rgba(16,185,129,.28); }
     .pill.ghost{ background:rgba(255,255,255,.08); color:#e5e7eb; }
     .pill.ghost:hover{ background:rgba(255,255,255,.16); }
   </style>
 
+  <!-- Smooth page niceties (optional) -->
   <script defer src="assets/site.js"></script>
-  <script defer src="assets/vortex.js"></script>
+  <!-- Cache-busted to force latest vortex build -->
+  <script defer src="assets/vortex.js?v=r11"></script>
 </head>
 
 <body>
-  <!--
-    Keep big text (2×): 12×36 cells.
-    Fewer gaps: handled in JS (no spaces around the separator).
-    Slower intro slide: prespeed=3 px/s (very slow) during 3s boot.
-    Slightly tighter spiral (b=3.8) and brighter letters for visibility.
-    Spiral centre lower so hero sits higher.
-  -->
+
+  <!-- Canvas vortex (grid-snapped, one letter per cell).
+       Slower: very low intro speed + slow final spiral.
+       Centre pushed down so hero sits higher than the spiral centre. -->
   <vortex-text
     data-words="TRAJECTORY,PROPULSION,Δv,CFD,REENTRY,ORBITAL,STARSHIP,MARS,SPICE,ROVER,SCRAMJET,UAV"
     data-cellw="12" data-cellh="36"
-    data-rows="40" data-b="3.8" data-speed="0.022"
-    data-boot="3000" data-prespeed="3"
-    data-centerx="0.5" data-centery="0.58">
-  </vortex-text>
+    data-rows="40" data-b="4.2"
+    data-centerx="0.5" data-centery="0.58"
+    data-boot="3000"
+    data-speed="0.40"   <!-- base speed in rad/s -->
+    data-intro="0.0005" <!-- 0.05% of base during intro (~super slow) -->
+    data-final="0.15"   <!-- 15% of base after morph (slow vortex) -->
+    data-debug="0"      <!-- set to 1 to show the small speed/morph HUD -->
+  ></vortex-text>
   <div class="scanlines"></div>
 
   <!-- NAV -->
   <header class="content-layer fixed top-0 inset-x-0">
     <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
       <div class="flex items-center gap-3">
-        <span class="block w-8 h-8 rounded-xl" style="background:#10b981"></span>
+        <span class="inline-block w-8 h-8 rounded-xl" style="background:#10b981"></span>
         <strong>Jack Emmerson</strong>
       </div>
       <div class="space-x-6 text-slate-300">
@@ -72,9 +81,10 @@
 
   <!-- HERO (raised above spiral centre) -->
   <main class="content-layer min-h-screen grid place-items-center px-6 pt-24">
-    <section class="text-center max-w-2xl" style="transform:translateY(-12vh)" data-reveal>
+    <section class="text-center max-w-2xl" style="transform:translateY(-12vh)">
       <h1 class="text-6xl md:text-7xl font-extrabold"
-          style="background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9); -webkit-background-clip:text; background-clip:text; color:transparent;">
+          style="background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
+                 -webkit-background-clip:text; background-clip:text; color:transparent;">
         Designing&nbsp;Tomorrow
       </h1>
       <p class="mt-6 text-lg" style="color:var(--muted)">
@@ -90,5 +100,6 @@
   <footer class="content-layer text-center text-slate-500 text-sm py-8">
     © 2025 Jack Emmerson
   </footer>
+
 </body>
 </html>
