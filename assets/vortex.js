@@ -12,7 +12,7 @@ class VortexText extends HTMLElement {
     this.cellH   = num("data-cellh", 36);
     this.rowsVis = num("data-rows", 40);         // visible rows baseline
     this.B       = num("data-b", 4.2);           // r = B * θ
-    this.speed   = num("data-speed", 0.022);     // radians/frame at full speed
+    this.speed   = num("data-speed", 0.0022);     // radians/frame at full speed
     this.boot    = num("data-boot", 3000);       // ms before morph completes
     this.centerX = Math.min(1, Math.max(0, num("data-centerx", 0.5)));
     this.centerY = Math.min(1, Math.max(0, num("data-centery", 0.58)));
