@@ -1,318 +1,280 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Jack Emmerson – Designing Tomorrow</title>
+<script>
+/* vortex → planets with orbit mask + planet halos (inline-orbits-r19)
+   - Faster morph into vortex
+   - Planets sync to real period ratios; initial phase from current date
+   - Text fades out except near orbits and circular halos around planets
+   - Grid-stepped letters (calm), 1 cell hop per ~0.6–0.3 s
+*/
+(function(){
+  // Planet data (semi-major axis in AU, sidereal period in Earth days)
+  const PLANETS = [
+    {name:"Mercury", a:0.3871, P:87.969,  color:"#cbd5e1", r:2},
+    {name:"Venus",   a:0.7233, P:224.701, color:"#fbbf24", r:3},
+    {name:"Earth",   a:1.0000, P:365.256, color:"#60a5fa", r:3},
+    {name:"Mars",    a:1.5237, P:686.980, color:"#f87171", r:3},
+    {name:"Jupiter", a:5.2026, P:4332.59, color:"#f59e0b", r:4},
+    {name:"Saturn",  a:9.5549, P:10759.2, color:"#fcd34d", r:4},
+    {name:"Uranus",  a:19.218, P:30688.5, color:"#a78bfa", r:4},
+    {name:"Neptune", a:30.110, P:60182.0, color:"#93c5fd", r:4}
+  ];
 
-  <style>
-    :root { --bg1:#0f172a; --bg2:#020617; --ink:#e2e8f0; --muted:#94a3b8; }
-    html,body{height:100%}
-    body{
-      margin:0; color:var(--ink);
-      background: radial-gradient(var(--bg1) 20%, var(--bg2) 80%);
-      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
-    }
-    /* Layout (no external CSS) */
-    .nav{position:fixed; inset-inline:0; top:0; z-index:20;}
-    .nav .row{max-width:1100px; margin:0 auto; padding:24px; display:flex; align-items:center; justify-content:space-between;}
-    .nav a{color:#cbd5e1; text-decoration:none; margin-left:24px}
-    .nav a:hover{color:#6ee7b7}
-    .hero{min-height:100vh; display:grid; place-items:center; padding:96px 24px 24px; position:relative; z-index:10;}
-    .hero .card{text-align:center; max-width:820px; transform:translateY(-12vh)}
-    .brand{display:inline-block; width:32px; height:32px; border-radius:12px; background:#10b981; margin-right:12px; vertical-align:middle}
-    .h1{
-      font-weight:800; font-size:clamp(44px,8vw,84px); line-height:1.05; margin:0;
-      background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-    }
-    .sub{margin-top:18px; color:var(--muted); font-size:18px}
-    .btns{margin-top:28px; display:flex; gap:14px; justify-content:center}
-    .pill{padding:12px 28px; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px)}
-    .pill.primary{background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.30)}
-    .pill.primary:hover{background:rgba(16,185,129,.28)}
-    .pill.ghost{background:rgba(255,255,255,.08); color:#e5e7eb}
-    .pill.ghost:hover{background:rgba(255,255,255,.16)}
+  class VortexPlanets extends HTMLElement {
+    connectedCallback(){
+      // === Tunables ======================================================
+      this.words = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
 
-    /* Effect layers */
-    vortex-ultraslow{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
-    .scanlines{position:fixed; inset:0; z-index:1; pointer-events:none;
-      background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 3px);
-    }
+      // Grid + spiral
+      const CELL_W=12, CELL_H=36;
+      const ROWS=40, B=4.2;              // r = B*θ
+      const CENTER_X=0.5, CENTER_Y=0.58;
 
-    /* Tiny HUD (can be removed later) */
-    .hud{position:fixed; left:8px; top:8px; z-index:50; background:rgba(2,6,23,.65); color:#cbd5e1;
-         padding:6px 10px; border-radius:6px; font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace}
-  </style>
-</head>
-<body>
-  <!-- Background effect -->
-  <vortex-ultraslow></vortex-ultraslow>
-  <div class="scanlines"></div>
+      // Vortex timing (finish before planets appear)
+      const BOOT_MS=2000;                // rows phase (idle)
+      const MORPH_MS=900;                // rows→spiral duration
+      const PLANETS_START_MORPH=0.98;    // planets/ orbits fade in after this
 
-  <!-- NAV -->
-  <header class="nav">
-    <div class="row">
-      <div><span class="brand"></span><strong>Jack Emmerson</strong></div>
-      <div>
-        <a href="index.html">Jack</a>
-        <a href="tools.html">Tools</a>
-        <a href="shop.html">Shop</a>
-      </div>
-    </div>
-  </header>
+      // Swirl speed (faster than before)
+      const SPEED_INTRO=0.0025;          // rad/s at morph start
+      const SPEED_FINAL=0.0200;          // rad/s when fully spiraled
 
-  <!-- HERO -->
-  <main class="hero">
-    <section class="card">
-      <h1 class="h1">Designing&nbsp;Tomorrow</h1>
-      <p class="sub">Aerospace engineering, CFD wizardry &amp; orbital mechanics — built in public.</p>
-      <div class="btns">
-        <a class="pill primary" href="tools.html">Explore Tools</a>
-        <a class="pill ghost" href="mailto:sidwellcourtney@gmail.com">Contact</a>
-      </div>
-    </section>
-  </main>
+      // Grid-step cadence (faster hops but still calm)
+      const STEP_INTRO_MS=600;           // ~0.6 s per allowed hop at start
+      const STEP_FINAL_MS=320;           // ~0.32 s when fully spiraled
 
-  <footer style="position:relative; z-index:10; text-align:center; color:#94a3b8; font-size:14px; padding:24px 0">
-    © 2025 Jack Emmerson
-  </footer>
+      // Fade: non-orbit text fades to 0 as morph→1
+      const FADE_POWER = 1.6;
 
-  <div id="hud" class="hud">booting…</div>
+      // Orbit rings kept visible (thin)
+      const ORBIT_BAND = 8;              // ±px around orbit to keep text
 
-  <!-- INLINE orbit-masked vortex (inline-orbits-r18-full) -->
-  <script>
-  (function(){
-    // ——— helpers
-    const hud = (t)=>{ const el=document.getElementById('hud'); if(el) el.textContent=t; };
+      // Planet halos (circular rings around each moving planet)
+      const HALO_R   = 22;               // radius of halo (px)
+      const HALO_BW  = 7;                // band width (px, ± around HALO_R)
 
-    class VortexUltraOrbits extends HTMLElement {
-      connectedCallback(){
-        try {
-          // ===== Tunables ====================================================
-          this.words = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
+      // Solar-system time scale (days simulated per animation second)
+      const DAYS_PER_SEC = 30;           // Earth ≈ 12 s per revolution
+      // ===================================================================
 
-          // Spiral/grid
-          const CELL_W=12, CELL_H=36;
-          const ROWS=40, B=4.2;            // r = B*θ
-          const CENTER_X=0.5, CENTER_Y=0.58;
-          const BOOT_MS=3000;              // rows phase
+      const line = (this.words.join("•")+"•").replace(/ /g,"");
 
-          // Motion (faster than r17, still gentle)
-          const SPEED_INTRO=0.00004;       // rad/s (soft)
-          const SPEED_FINAL=0.0018;        // rad/s (slow)
-          const STEP_INTRO_MS=800;         // max one cell hop / ~0.8s
-          const STEP_FINAL_MS=600;         // ~0.6s
+      // Canvas
+      const cvs = document.createElement("canvas");
+      const ctx = cvs.getContext("2d");
+      this.appendChild(cvs);
 
-          // Fade: as morph→1, base letters fade; orbit letters persist
-          const FADE_POWER = 1.5;
+      // Geometry + precompute
+      const resize = () => {
+        const dpr = Math.max(1, devicePixelRatio||1);
+        cvs.width  = Math.floor(innerWidth*dpr);
+        cvs.height = Math.floor(innerHeight*dpr);
+        cvs.style.width  = innerWidth+"px";
+        cvs.style.height = innerHeight+"px";
+        ctx.setTransform(dpr,0,0,dpr,0,0);
 
-          // Orbits (auto scaled)
-          const ORBIT_COUNT = 5;
-          const ORBIT_INNER = 0.12;        // fraction of min(viewport)
-          const ORBIT_STEP  = 0.115;
-          const ORBIT_BAND  = 14;          // ±px around orbit to keep letters
+        this.cx = innerWidth*CENTER_X;
+        this.cy = innerHeight*CENTER_Y;
 
-          // Planet dots
-          const PLANET_SPEED_MIN = 0.02, PLANET_SPEED_MAX = 0.06; // base scales
-          // ===================================================================
+        // font & cell sanity
+        this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
+        ctx.font = `${this.fontPx}px "Courier New", monospace`;
+        const mw = Math.ceil(ctx.measureText("M").width)+2;
+        this.cellW = Math.max(CELL_W, mw);
+        this.cellH = CELL_H;
 
-          const line = (this.words.join("•")+"•").replace(/ /g,"");
+        // grid
+        this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
+        this.rows = Math.max(1, ROWS);
+        this.N    = Math.min(this.cols*this.rows, 12000);
 
-          const cvs = document.createElement("canvas");
-          const ctx = cvs.getContext("2d");
-          this.appendChild(cvs);
+        const maxR = Math.hypot(Math.max(this.cx, innerWidth-this.cx),
+                                Math.max(this.cy, innerHeight-this.cy)) + 60;
+        this.maxTheta = maxR / B;
 
-          const resize = () => {
-            const dpr = Math.max(1, devicePixelRatio||1);
-            cvs.width  = Math.floor(innerWidth*dpr);
-            cvs.height = Math.floor(innerHeight*dpr);
-            cvs.style.width  = innerWidth+"px";
-            cvs.style.height = innerHeight+"px";
-            ctx.setTransform(dpr,0,0,dpr,0,0);
+        // θ inner→outer
+        this.theta = new Float32Array(this.N);
+        for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
-            this.cx = innerWidth*CENTER_X;
-            this.cy = innerHeight*CENTER_Y;
-
-            // font & cell sanity
-            this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
-            ctx.font = `${this.fontPx}px "Courier New", monospace`;
-            const mw = Math.ceil(ctx.measureText("M").width)+2;
-            this.cellW = Math.max(CELL_W, mw);
-            this.cellH = CELL_H;
-
-            this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
-            this.rows = Math.max(1, ROWS);
-            this.N    = Math.min(this.cols*this.rows, 12000);
-
-            const maxR = Math.hypot(Math.max(this.cx, innerWidth-this.cx),
-                                    Math.max(this.cy, innerHeight-this.cy)) + 60;
-            this.maxTheta = maxR / B;
-
-            // θ inner→outer
-            this.theta = new Float32Array(this.N);
-            for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
-
-            // grid mapping + state
-            this.rcRow = new Int16Array(this.N);
-            this.rcCol = new Int16Array(this.N);
-            this.lastCi= new Int16Array(this.N);
-            this.lastRi= new Int16Array(this.N);
-            this.nextAt= new Float64Array(this.N);
-            let k=0, now=performance.now();
-            for (let r=0;r<this.rows && k<this.N;r++){
-              for (let c=0;c<this.cols && k<this.N;c++,k++){
-                this.rcRow[k]=r; this.rcCol[k]=c;
-                this.lastCi[k]=c; this.lastRi[k]=r;
-                this.nextAt[k]=now;
-              }
-            }
-            this.occ = new Uint8Array(this.cols*this.rows);
-
-            // orbits
-            const minDim = Math.min(innerWidth, innerHeight);
-            this.orbits = new Array(ORBIT_COUNT).fill(0).map((_,i)=> (ORBIT_INNER + i*ORBIT_STEP) * minDim);
-
-            // planets
-            this.planetA = this.orbits.map(()=> Math.random()*Math.PI*2);
-            this.planetV = this.orbits.map(()=> (PLANET_SPEED_MIN + Math.random()*(PLANET_SPEED_MAX-PLANET_SPEED_MIN)) * 0.06);
-          };
-          addEventListener("resize", resize, {passive:true}); resize();
-
-          const ease = t => t<.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
-
-          this.__version = "inline-orbits-r18-full";
-          let tStart = performance.now(), tPrev = tStart;
-
-          const tick = (now) => {
-            const dt = Math.min(1/20, Math.max(0,(now - tPrev)/1000)); tPrev = now;
-
-            ctx.clearRect(0,0,innerWidth,innerHeight);
-
-            // morph + speeds
-            const mRaw = Math.min(1, Math.max(0,(now - tStart - BOOT_MS)/1200));
-            const morph = ease(mRaw);
-            const speedNow = SPEED_INTRO + (SPEED_FINAL - SPEED_INTRO)*morph;
-            const stepMs   = STEP_INTRO_MS + (STEP_FINAL_MS - STEP_INTRO_MS)*morph;
-
-            // slow character cycling
-            const charOffset = Math.floor(now / 6000) % line.length;
-
-            // faint orbit rings
-            ctx.save();
-            ctx.strokeStyle = "rgba(148,163,184,0.18)";
-            ctx.lineWidth = 1;
-            this.orbits.forEach(r=>{
-              ctx.beginPath();
-              ctx.arc(this.cx, this.cy, r, 0, Math.PI*2);
-              ctx.stroke();
-            });
-            ctx.restore();
-
-            // reset occupancy
-            this.occ.fill(0);
-            const halfRowsH = (ROWS*this.cellH)/2;
-
-            // letters
-            ctx.font = `${this.fontPx}px "Courier New", monospace`;
-            ctx.textAlign="center"; ctx.textBaseline="middle";
-
-            for (let i=0;i<this.N;i++){
-              let t = this.theta[i];
-              if (t > this.maxTheta){ t -= this.maxTheta; this.theta[i]=t; }
-              const r = B*t;
-
-              // spiral vs rows positions
-              const sx = this.cx + r*Math.cos(t);
-              const sy = this.cy + r*Math.sin(t);
-              const rx = (this.rcCol[i]+0.5)*this.cellW;
-              const ry = (this.rcRow[i]+0.5)*this.cellH + (this.cy - halfRowsH);
-
-              let x = rx*(1-morph) + sx*morph;
-              let y = ry*(1-morph) + sy*morph;
-
-              const ciT = Math.round(x / this.cellW);
-              const riT = Math.round(y / this.cellH);
-
-              // step one cell at a time, with cooldown
-              let ci = this.lastCi[i], ri = this.lastRi[i];
-              if ((ciT!==ci || riT!==ri) && now >= this.nextAt[i]) {
-                const dci = ciT - ci, dri = riT - ri;
-                if (Math.abs(dci) >= Math.abs(dri)) ci += Math.sign(dci)||0;
-                else ri += Math.sign(dri)||0;
-                ci = Math.max(0, Math.min(this.cols-1, ci));
-                ri = Math.max(0, Math.min(this.rows-1, ri));
-                this.lastCi[i]=ci; this.lastRi[i]=ri;
-                this.nextAt[i]= now + stepMs;
-              }
-
-              const key = ri*this.cols + ci;
-              if (this.occ[key]) { this.theta[i]=t + speedNow*dt; continue; }
-              this.occ[key]=1;
-
-              const px = ci*this.cellW, py = ri*this.cellH;
-
-              // fade: keep letters near any orbit; others fade with morph
-              const dist = Math.hypot(px - this.cx, py - this.cy);
-              let orbitMask = 0;
-              for (let k=0;k<this.orbits.length;k++){
-                const d = Math.abs(dist - this.orbits[k]);
-                const a = Math.max(0, 1 - d/ORBIT_BAND);
-                if (a > orbitMask) orbitMask = a;
-              }
-              const baseFade = Math.pow(1 - morph, FADE_POWER);
-              const alpha = Math.max(orbitMask, baseFade);
-
-              if (alpha > 0.02) {
-                ctx.globalAlpha = alpha;
-                ctx.fillStyle = "#d7e0ee";
-                const ch = line.charAt((i + charOffset) % line.length) || "•";
-                ctx.fillText(ch, px, py);
-              }
-
-              this.theta[i] = t + speedNow*dt;
-            }
-            ctx.globalAlpha = 1;
-
-            // planets
-            ctx.save();
-            ctx.fillStyle = "#93c5fd";
-            for (let k=0;k<this.orbits.length;k++){
-              this.planetA[k] += this.planetV[k] * dt; // very slow
-              const r = this.orbits[k];
-              const ax = this.cx + r * Math.cos(this.planetA[k]);
-              const ay = this.cy + r * Math.sin(this.planetA[k]);
-              ctx.beginPath();
-              ctx.arc(ax, ay, 3, 0, Math.PI*2);
-              ctx.fill();
-            }
-            ctx.restore();
-
-            hud(`inline-orbits-r18 | morph=${morph.toFixed(2)} speed=${speedNow.toFixed(5)} rad/s`);
-            requestAnimationFrame(tick);
-          };
-          requestAnimationFrame(tick);
-        } catch (e) {
-          hud("error: " + (e && e.message || e));
+        // grid mapping + state
+        this.rcRow = new Int16Array(this.N);
+        this.rcCol = new Int16Array(this.N);
+        this.lastCi= new Int16Array(this.N);
+        this.lastRi= new Int16Array(this.N);
+        this.nextAt= new Float64Array(this.N);
+        let k=0, now=performance.now();
+        for (let r=0;r<this.rows && k<this.N;r++){
+          for (let c=0;c<this.cols && k<this.N;c++,k++){
+            this.rcRow[k]=r; this.rcCol[k]=c;
+            this.lastCi[k]=c; this.lastRi[k]=r;
+            this.nextAt[k]=now;
+          }
         }
-      }
+        this.occ = new Uint8Array(this.cols*this.rows);
+
+        // scale AU → pixels so Neptune fits nicely near edge
+        const minDim = Math.min(innerWidth, innerHeight);
+        const maxAU  = 30.11;                    // Neptune
+        const kpx    = (0.46 * minDim) / maxAU;  // scale factor px/AU
+        this.orbits  = PLANETS.map(p => p.a * kpx);
+
+        // planet initial angles from current date (simple mean anomaly)
+        const daysNow = Date.now()/86400000; // days since 1970-01-01
+        this.a0 = PLANETS.map(p => 2*Math.PI * ((daysNow % p.P) / p.P));
+        // angular rates: ω = 2π * (days/sec) / P
+        this.omega = PLANETS.map(p => 2*Math.PI * (DAYS_PER_SEC / p.P));
+      };
+      addEventListener("resize", resize, {passive:true}); resize();
+
+      const ease = t => t<.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
+
+      this.__version = "inline-orbits-r19";
+      let tStart = performance.now(), tPrev = tStart;
+
+      const tick = (now) => {
+        const dt = Math.min(1/20, Math.max(0,(now - tPrev)/1000)); tPrev = now;
+
+        ctx.clearRect(0,0,innerWidth,innerHeight);
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+
+        // morph progress
+        const mRaw = Math.min(1, Math.max(0,(now - tStart - BOOT_MS)/MORPH_MS));
+        const morph = ease(mRaw);
+
+        // speeds + step cadence
+        const speedNow = SPEED_INTRO + (SPEED_FINAL - SPEED_INTRO)*morph;
+        const stepMs   = STEP_INTRO_MS + (STEP_FINAL_MS - STEP_INTRO_MS)*morph;
+
+        // planets visible only after vortex is basically done
+        const planetsOn = morph >= PLANETS_START_MORPH;
+
+        // slow character cycling
+        const charOffset = Math.floor(now / 4000) % line.length;
+
+        // Draw orbits only when planets are on
+        if (planetsOn) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(148,163,184,0.18)";
+          ctx.lineWidth = 1;
+          this.orbits.forEach(r=>{
+            ctx.beginPath();
+            ctx.arc(this.cx, this.cy, r, 0, Math.PI*2);
+            ctx.stroke();
+          });
+          ctx.restore();
+        }
+
+        // Reset occupancy and draw letters
+        this.occ.fill(0);
+        const halfRowsH = (ROWS*this.cellH)/2;
+        ctx.font = `${this.fontPx}px "Courier New", monospace`;
+
+        for (let i=0;i<this.N;i++){
+          let t = this.theta[i];
+          if (t > this.maxTheta){ t -= this.maxTheta; this.theta[i]=t; }
+          const r = B*t;
+
+          // spiral vs row position
+          const sx = this.cx + r*Math.cos(t);
+          const sy = this.cy + r*Math.sin(t);
+          const rx = (this.rcCol[i]+0.5)*this.cellW;
+          const ry = (this.rcRow[i]+0.5)*this.cellH + (this.cy - halfRowsH);
+
+          let x = rx*(1-morph) + sx*morph;
+          let y = ry*(1-morph) + sy*morph;
+
+          const ciT = Math.round(x / this.cellW);
+          const riT = Math.round(y / this.cellH);
+
+          // grid step with cooldown
+          let ci = this.lastCi[i], ri = this.lastRi[i];
+          if ((ciT!==ci || riT!==ri) && now >= this.nextAt[i]) {
+            const dci = ciT - ci, dri = riT - ri;
+            if (Math.abs(dci) >= Math.abs(dri)) ci += Math.sign(dci)||0;
+            else ri += Math.sign(dri)||0;
+            ci = Math.max(0, Math.min(this.cols-1, ci));
+            ri = Math.max(0, Math.min(this.rows-1, ri));
+            this.lastCi[i]=ci; this.lastRi[i]=ri;
+            this.nextAt[i]= now + stepMs;
+          }
+
+          const key = ri*this.cols + ci;
+          if (this.occ[key]) { this.theta[i]=t + speedNow*dt; continue; }
+          this.occ[key]=1;
+
+          const px = ci*this.cellW, py = ri*this.cellH;
+
+          // base fade of non-orbit text as morph completes
+          let alpha = Math.pow(1 - morph, FADE_POWER);
+
+          if (planetsOn) {
+            // keep letters near any orbit ring (thin band)
+            const dist = Math.hypot(px - this.cx, py - this.cy);
+            let orbitMask = 0;
+            for (let k=0;k<this.orbits.length;k++){
+              const d = Math.abs(dist - this.orbits[k]);
+              const a = Math.max(0, 1 - d/ORBIT_BAND);
+              if (a > orbitMask) orbitMask = a;
+            }
+            // keep letters in circular halos around each moving planet
+            let haloMask = 0;
+            for (let k=0;k<this.orbits.length;k++){
+              const ang = this.a0[k] + this.omega[k] * ((now - tStart)/1000);
+              const cx = this.cx + this.orbits[k] * Math.cos(ang);
+              const cy = this.cy + this.orbits[k] * Math.sin(ang);
+              const d  = Math.hypot(px - cx, py - cy);
+              const a  = Math.max(0, 1 - Math.abs(d - HALO_R)/HALO_BW);
+              if (a > haloMask) haloMask = a;
+            }
+            alpha = Math.max(alpha, orbitMask, haloMask);
+          }
+
+          if (alpha > 0.02) {
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = "#d7e0ee";
+            const ch = line.charAt((i + charOffset) % line.length) || "•";
+            ctx.fillText(ch, px, py);
+          }
+
+          // advance θ along spiral
+          this.theta[i] = t + speedNow*dt;
+        }
+        ctx.globalAlpha = 1;
+
+        // Draw planets (after morph)
+        if (planetsOn) {
+          ctx.save();
+          for (let k=0;k<this.orbits.length;k++){
+            const ang = this.a0[k] + this.omega[k] * ((now - tStart)/1000);
+            const r   = this.orbits[k];
+            const ax  = this.cx + r * Math.cos(ang);
+            const ay  = this.cy + r * Math.sin(ang);
+            // halo outline (thin)
+            ctx.strokeStyle = "rgba(148,163,184,0.20)";
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(ax, ay, HALO_R, 0, Math.PI*2); ctx.stroke();
+            // planet
+            ctx.fillStyle = PLANETS[k].color;
+            ctx.beginPath(); ctx.arc(ax, ay, PLANETS[k].r, 0, Math.PI*2); ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        // HUD
+        const el = document.getElementById('hud');
+        if (el) el.textContent = `inline-orbits-r19 | morph=${morph.toFixed(2)} speed=${speedNow.toFixed(3)} rad/s`;
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
     }
-    // Define (or replace) the element
-    const TAG = 'vortex-ultraslow';
-    if (customElements.get(TAG)) {
-      // replace the instance with our new implementation under a fresh tag
-      const NewTag = 'vortex-ultraslow2';
-      if (!customElements.get(NewTag)) customElements.define(NewTag, VortexUltraOrbits);
-      const old = document.querySelector(TAG);
-      if (old) old.replaceWith(document.createElement(NewTag));
-      hud('replaced old vortex');
-    } else {
-      customElements.define(TAG, VortexUltraOrbits);
-    }
-  })();
-  </script>
-</body>
-</html>
+  }
+
+  // Register/replace element cleanly
+  const TAG='vortex-ultraslow';
+  if (!customElements.get(TAG)) {
+    customElements.define(TAG, VortexPlanets);
+  } else {
+    const NewTag='vortex-ultraslow-r19';
+    if (!customElements.get(NewTag)) customElements.define(NewTag, VortexPlanets);
+    const old=document.querySelector(TAG); if (old) old.replaceWith(document.createElement(NewTag));
+  }
+})();
+</script>
