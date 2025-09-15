@@ -15,24 +15,41 @@
   </script>
 
   <style>
-    :root { --bg1:#0f172a; --bg2:#020617; --ink:#e2e8f0; --muted:#94a3b8; }
-    * { box-sizing: border-box }
+    :root{
+      --bg:#0f172a;
+      --bg2:#0b1324;
+      --ink:#e2e8f0;
+      --muted:#94a3b8;
+      --em:#6ee7b7;
+      --card:#0b1222;
+      --ring: rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; color:var(--ink);
-      background: radial-gradient(1200px 800px at 50% 40%, var(--bg1), var(--bg2));
-      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
+      background: radial-gradient(1200px 800px at 50% 40%, var(--bg), #020617);
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+      line-height:1.4;
     }
 
-    /* Layout */
-    .nav{position:fixed; inset-inline:0; top:0; z-index:20;}
-    .nav .row{max-width:1100px; margin:0 auto; padding:20px 24px; display:flex; align-items:center; justify-content:space-between;}
+    /* ==== LAYERS ==== */
+    /* Canvas effect lives UNDER everything */
+    vortex-show{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
+
+    /* Top navigation */
+    .nav{position:fixed; inset-inline:0; top:0; z-index:10;}
+    .nav .row{max-width:1100px; margin:0 auto; padding:18px 24px; display:flex; align-items:center; justify-content:space-between;}
     .nav a{color:#cbd5e1; text-decoration:none; margin-left:24px}
-    .nav a:hover{color:#6ee7b7}
+    .nav a:hover{color:var(--em)}
     .brand{display:inline-block; width:28px; height:28px; border-radius:10px; background:#10b981; margin-right:10px; vertical-align:middle}
 
-    .hero{min-height:100vh; display:grid; place-items:center; padding:96px 24px 24px; position:relative; z-index:10;}
-    .hero .card{text-align:center; max-width:820px; transform:translateY(-10vh)}
+    /* HERO area stays translucent so you see the effect */
+    .hero{
+      min-height:92vh; display:grid; place-items:center; padding:120px 24px 24px;
+      position:relative; z-index:5;
+    }
+    .hero .card{text-align:center; max-width:820px; transform:translateY(-6vh)}
     .h1{
       font-weight:800; font-size:clamp(44px,8vw,84px); line-height:1.05; margin:0;
       background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
@@ -42,40 +59,69 @@
     .sub{margin-top:18px; color:var(--muted); font-size:18px}
     .btns{margin-top:28px; display:flex; gap:14px; justify-content:center}
     .pill{padding:12px 28px; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px)}
-    .pill.primary{background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.30)}
+    .pill.primary{background:rgba(16,185,129,.18); color:var(--em); border-color:rgba(16,185,129,.30)}
     .pill.primary:hover{background:rgba(16,185,129,.28)}
     .pill.ghost{background:rgba(255,255,255,.08); color:#e5e7eb}
     .pill.ghost:hover{background:rgba(255,255,255,.16)}
 
-    /* Effect layer */
-    vortex-show{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
-    .scanlines{position:fixed; inset:0; z-index:1; pointer-events:none;
-      background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 3px);
+    .scroll-cue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; letter-spacing:.2em}
+
+    /* ==== CONTENT PANEL that COVERS the canvas on scroll ==== */
+    .content{
+      position:relative; z-index:8;       /* above the canvas */
+      background:linear-gradient(to bottom, var(--bg) 0%, var(--bg2) 100%);
+      border-top:1px solid var(--ring);
+      box-shadow:0 -24px 64px rgba(0,0,0,.45) inset;
+      /* create new stacking context so it fully covers */
+      isolation:isolate;
     }
 
-    footer{position:relative; z-index:10; text-align:center; color:#94a3b8; font-size:14px; padding:24px 0}
+    .content .wrap{max-width:1100px; margin:0 auto; padding:56px 24px 96px}
+
+    .section-title{font-size:28px; letter-spacing:.02em; margin:0 0 6px}
+    .section-sub{color:var(--muted); margin:0 0 32px}
+
+    /* Achievements grid */
+    .ach{display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
+         background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+         border:1px solid var(--ring); border-radius:18px; padding:22px; margin:22px 0;}
+    .ach:nth-child(even){grid-template-columns:1fr 1.2fr}
+    .ach__media{aspect-ratio:4/3; background:radial-gradient(ellipse at 30% 20%, #0f1b34 0, #0a1222 60%); border:1px solid var(--ring); border-radius:14px; overflow:hidden}
+    .ach__media img{width:100%; height:100%; object-fit:cover; display:block}
+    .ach__title{font-weight:700; font-size:22px; margin:0 0 4px}
+    .ach__sub{color:var(--muted); margin:0 0 12px}
+    .ach__body{color:#cdd6e3; font-size:15px; margin:0}
+
+    /* Reveal on scroll */
+    .reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease}
+    .reveal.in{opacity:1; transform:none}
+    @media (prefers-reduced-motion:reduce){
+      .reveal{transition:none}
+    }
+
+    footer{position:relative; z-index:8; text-align:center; color:#94a3b8; font-size:14px; padding:28px 0}
     .hud{position:fixed; left:8px; top:8px; z-index:50; background:rgba(2,6,23,.65); color:#cbd5e1;
          padding:6px 10px; border-radius:6px; font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace}
   </style>
 </head>
 <body>
+  <!-- Background effect (under everything) -->
   <vortex-show></vortex-show>
-  <div class="scanlines"></div>
 
   <!-- NAV -->
   <header class="nav">
     <div class="row">
       <div><span class="brand"></span><strong>Jack Emmerson</strong></div>
       <div>
-        <a href="index.html">Jack</a>
+        <a href="#top">Jack</a>
         <a href="tools.html">Tools</a>
         <a href="shop.html">Shop</a>
       </div>
     </div>
   </header>
 
-  <!-- HERO -->
-  <main class="hero">
+  <!-- HERO (translucent; shows the effect) -->
+  <main id="top" class="hero">
     <section class="card">
       <h1 class="h1">Designing&nbsp;Tomorrow</h1>
       <p class="sub">Aerospace engineering, CFD wizardry &amp; orbital mechanics — built in public.</p>
@@ -84,219 +130,213 @@
         <a class="pill ghost" href="mailto:sidwellcourtney@gmail.com">Contact</a>
       </div>
     </section>
+    <div class="scroll-cue">SCROLL</div>
   </main>
 
-  <footer>© 2025 Jack Emmerson</footer>
-  <div id="hud" class="hud">booting…</div>
+  <!-- CONTENT PANEL (covers the canvas as you scroll) -->
+  <div class="content">
+    <div class="wrap">
+      <h2 class="section-title">Achievements</h2>
+      <p class="section-sub">Selected projects, publications & hands-on experiments.</p>
 
-  <!-- EFFECT: intro (right-slide) → spiral (text fades 1→0 during spiral) → static grid with planet-disc reveal -->
+      <!-- Cards (replace text/images with your own) -->
+      <article class="ach reveal">
+        <div class="ach__body">
+          <h3 class="ach__title">Micro UAV Capstone</h3>
+          <p class="ach__sub">Deployable from a sounding rocket</p>
+          <p class="ach__body">Designed and tested a 2U form-factor UAV for rapid deployment. Flight dynamics modeled in JSBSim; onboard mission logic in C++.</p>
+        </div>
+        <div class="ach__media">
+          <!-- Replace with your image -->
+          <img alt="" src="https://images.unsplash.com/photo-1518281420975-50db6e5d0a97?q=80&w=1200&auto=format&fit=crop" />
+        </div>
+      </article>
+
+      <article class="ach reveal">
+        <div class="ach__media">
+          <img alt="" src="https://images.unsplash.com/photo-1517976487492-5768de1f3c52?q=80&w=1200&auto=format&fit=crop" />
+        </div>
+        <div class="ach__body">
+          <h3 class="ach__title">CFD Toolkit</h3>
+          <p class="ach__sub">Open-source solvers & visualizers</p>
+          <p class="ach__body">Built JS/WebGL prototypes for inviscid flows and shock visualization; exported to WASM for speed.</p>
+        </div>
+      </article>
+
+      <article class="ach reveal">
+        <div class="ach__body">
+          <h3 class="ach__title">Orbital Mechanics Playground</h3>
+          <p class="ach__sub">Intuitive Δv + transfer explorer</p>
+          <p class="ach__body">Interactive tool for Hohmann/bi-elliptic transfers and plane changes. Numerics validated against poliastro.</p>
+        </div>
+        <div class="ach__media">
+          <img alt="" src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" />
+        </div>
+      </article>
+
+      <article class="ach reveal">
+        <div class="ach__media">
+          <img alt="" src="https://images.unsplash.com/photo-1605649487212-47bdab064df3?q=80&w=1200&auto=format&fit=crop" />
+        </div>
+        <div class="ach__body">
+          <h3 class="ach__title">p5.js “Asteroids” Clone</h3>
+          <p class="ach__sub">Physics-first, tiny footprint</p>
+          <p class="ach__body">A few hundred lines of code, deterministic collisions, and crisp feel tuned by frame-level telemetry.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <footer>© 2025 Jack Emmerson</footer>
+  <div id="hud" class="hud">inline-orbits-r23 | ready</div>
+
+  <!-- Reveal on scroll -->
+  <script>
+    (function(){
+      const items=[...document.querySelectorAll('.reveal')];
+      if(!('IntersectionObserver'in window)){ items.forEach(el=>el.classList.add('in')); return; }
+      const io=new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+      },{threshold:.15});
+      items.forEach(el=>io.observe(el));
+    })();
+  </script>
+
+  <!-- ====== Orbit text effect (same r23 logic, layered UNDER content) ====== -->
   <script>
   (function(){
-    /* -------- Config (tweak as you like) -------- */
-    // Mercury..Mars only (Mars = outermost). Bigger dots & reveal discs.
+    /* Planets (Mercury..Mars; Mars outermost; larger discs/dots) */
     const PLANETS = [
       {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:4, disc:30},
       {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:6, disc:38},
       {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:7, disc:44},
       {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:7, disc:50}
     ];
+    const INTRO_SECS=1.5, SLIDE_PX_PER_SEC=28, SPIRAL_MS=1200, B_SPIRAL=4.2, SPEED_RAD_S=0.012;
+    const CELL_W=12, CELL_H=36, ROWS=40, CENTER_X=.5, CENTER_Y=.58, DAYS_PER_SEC=30;
+    const WORDS=["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
+    const LINE=(WORDS.join("•")+"•").replace(/ /g,"");
+    const clamp01=x=>Math.max(0,Math.min(1,x));
+    const easeCubic=t=>(t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2);
 
-    const INTRO_SECS = 1.5;             // half the old time
-    const SLIDE_PX_PER_SEC = 28;        // gentle readable speed
-
-    const SPIRAL_MS = 1200;             // spiral duration (fade is tied to this)
-    const B_SPIRAL = 4.2;               // r = B * θ
-    const SPEED_RAD_S = 0.012;          // θ drift while spiraling
-
-    const CELL_W = 12, CELL_H = 36, ROWS = 40;
-    const CENTER_X = 0.5, CENTER_Y = 0.58;
-    const DAYS_PER_SEC = 30;            // solar-system speed
-
-    const WORDS = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
-    const LINE = (WORDS.join("•")+"•").replace(/ /g,"");
-
-    /* -------- Helpers -------- */
-    const clamp01 = x => Math.max(0, Math.min(1, x));
-    const easeCubic = t => (t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2);
-
-    class VortexShow extends HTMLElement {
+    class VortexShow extends HTMLElement{
       connectedCallback(){
-        this.c = document.createElement('canvas');
-        this.ctx = this.c.getContext('2d', {alpha:true});
+        this.c=document.createElement('canvas');
+        this.x=this.c.getContext('2d',{alpha:true});
         this.appendChild(this.c);
 
-        const resize = () => {
-          const dpr = Math.max(1, devicePixelRatio||1);
-          this.c.width  = Math.floor(innerWidth*dpr);
-          this.c.height = Math.floor(innerHeight*dpr);
-          this.c.style.width  = innerWidth+"px";
-          this.c.style.height = innerHeight+"px";
-          this.ctx.setTransform(dpr,0,0,dpr,0,0);
+        const resize=()=>{
+          const dpr=Math.max(1,devicePixelRatio||1);
+          this.c.width=Math.floor(innerWidth*dpr); this.c.height=Math.floor(innerHeight*dpr);
+          this.c.style.width=innerWidth+"px"; this.c.style.height=innerHeight+"px";
+          this.x.setTransform(dpr,0,0,dpr,0,0);
 
-          this.cx = innerWidth*CENTER_X;
-          this.cy = innerHeight*CENTER_Y;
+          this.cx=innerWidth*CENTER_X; this.cy=innerHeight*CENTER_Y;
 
-          // Font + cell
-          this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
-          this.ctx.font = `${this.fontPx}px "Courier New", monospace`;
-          const mw = Math.ceil(this.ctx.measureText("M").width)+2;
-          this.cellW = Math.max(CELL_W, mw);
-          this.cellH = CELL_H;
+          this.fontPx=Math.max(10,Math.floor(CELL_H*.61));
+          this.x.font=`${this.fontPx}px "Courier New", monospace`;
+          const mw=Math.ceil(this.x.measureText("M").width)+2;
+          this.cellW=Math.max(CELL_W,mw); this.cellH=CELL_H;
 
-          // Extend grid horizontally to avoid left-gap when sliding right
-          const slideMax = SLIDE_PX_PER_SEC * INTRO_SECS;
-          const extraCols = Math.ceil(slideMax / this.cellW) + 2;
-          this.cols = Math.max(1, Math.floor((innerWidth + extraCols*this.cellW*2) / this.cellW));
-          this.rows = Math.max(1, ROWS);
-          this.N    = Math.min(this.cols*this.rows, 16000);
-          this.gridOffsetX = -extraCols*this.cellW;
+          const slideMax=SLIDE_PX_PER_SEC*INTRO_SECS;
+          const extraCols=Math.ceil(slideMax/this.cellW)+2;
+          this.cols=Math.max(1,Math.floor((innerWidth+extraCols*this.cellW*2)/this.cellW));
+          this.rows=Math.max(1,ROWS); this.N=Math.min(this.cols*this.rows,16000);
+          this.gridOffsetX=-extraCols*this.cellW;
 
-          // Row-major mapping
-          this.rcR = new Int16Array(this.N);
-          this.rcC = new Int16Array(this.N);
-          let k=0;
-          for (let r=0;r<this.rows && k<this.N;r++){
-            for (let c=0;c<this.cols && k<this.N;c++,k++){
-              this.rcR[k]=r; this.rcC[k]=c;
-            }
-          }
+          this.rcR=new Int16Array(this.N); this.rcC=new Int16Array(this.N);
+          let k=0; for(let r=0;r<this.rows&&k<this.N;r++){ for(let c=0;c<this.cols&&k<this.N;c++,k++){ this.rcR[k]=r; this.rcC[k]=c; } }
 
-          // Row baseline (static vertically)
-          this.y0 = this.cy - (this.rows*this.cellH)/2;
+          this.y0=this.cy-(this.rows*this.cellH)/2;
 
-          // Spiral precompute
-          const maxR = Math.hypot(Math.max(this.cx, innerWidth-this.cx),
-                                  Math.max(this.cy, innerHeight-this.cy)) + 60;
-          this.maxTheta = maxR / B_SPIRAL;
-          this.theta = new Float32Array(this.N);
-          for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
+          const maxR=Math.hypot(Math.max(this.cx,innerWidth-this.cx),Math.max(this.cy,innerHeight-this.cy))+60;
+          this.maxTheta=maxR/B_SPIRAL; this.theta=new Float32Array(this.N);
+          for(let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
-          // Orbits scaled so Mars ≈ 45% of min dimension
-          const minDim = Math.min(innerWidth, innerHeight);
-          const kpx = (0.45 * minDim) / 1.5237; // Mars a
-          this.orbitR = PLANETS.map(p => p.a * kpx);
+          const minDim=Math.min(innerWidth,innerHeight);
+          const kpx=(0.45*minDim)/1.5237; // Mars outermost
+          this.orbitR=PLANETS.map(p=>p.a*kpx);
 
-          // Planet phases & rates
-          const daysNow = Date.now()/86400000;
-          this.ang0  = PLANETS.map(p => 2*Math.PI*((daysNow % p.P)/p.P));
-          this.omega = PLANETS.map(p => 2*Math.PI*(DAYS_PER_SEC/p.P));
+          const daysNow=Date.now()/86400000;
+          this.ang0=PLANETS.map(p=>2*Math.PI*((daysNow%p.P)/p.P));
+          this.omega=PLANETS.map(p=>2*Math.PI*(DAYS_PER_SEC/p.P));
         };
-        addEventListener('resize', resize, {passive:true});
-        resize();
+        addEventListener('resize',resize,{passive:true}); resize();
 
-        this.t0 = performance.now();
-        this.last = this.t0;
-        this.tick = this.tick.bind(this);
-        requestAnimationFrame(this.tick);
+        this.t0=performance.now(); this.last=this.t0;
+        requestAnimationFrame(this.tick.bind(this));
       }
-
       tick(now){
-        const dt = Math.min(1/20, Math.max(0,(now - this.last)/1000)); this.last = now;
-        const ctx = this.ctx, w = innerWidth, h = innerHeight;
-        ctx.clearRect(0,0,w,h);
-        ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillStyle="#d7e0ee";
-        ctx.font = `${this.fontPx}px "Courier New", monospace`;
+        const dt=Math.min(1/20,Math.max(0,(now-this.last)/1000)); this.last=now;
+        const x=this.x, w=innerWidth, h=innerHeight;
+        x.clearRect(0,0,w,h);
+        x.textAlign="center"; x.textBaseline="middle"; x.fillStyle="#d7e0ee";
+        x.font=`${this.fontPx}px "Courier New", monospace`;
 
-        // Phases
-        const introMs   = INTRO_SECS*1000;
-        const tIntro    = clamp01((now - this.t0)/introMs);
-        const tSpiral   = clamp01((now - (this.t0 + introMs))/SPIRAL_MS);
-        const spiralMix = easeCubic(tSpiral);  // 0..1 during spiral
+        const introMs=INTRO_SECS*1000;
+        const tIntro=clamp01((now-this.t0)/introMs);
+        const tSpiral=clamp01((now-(this.t0+introMs))/SPIRAL_MS);
+        const sMix=easeCubic(tSpiral);
 
-        // Positions for planets (always moving)
-        const tSec = (now - this.t0)/1000;
-        const px=[], py=[];
-        for (let k=0;k<this.orbitR.length;k++){
-          const a = this.ang0[k] + this.omega[k]*tSec;
-          px[k] = this.cx + this.orbitR[k]*Math.cos(a);
-          py[k] = this.cy + this.orbitR[k]*Math.sin(a);
+        const tSec=(now-this.t0)/1000, px=[], py=[];
+        for(let k=0;k<this.orbitR.length;k++){
+          const a=this.ang0[k]+this.omega[k]*tSec;
+          px[k]=this.cx+this.orbitR[k]*Math.cos(a);
+          py[k]=this.cy+this.orbitR[k]*Math.sin(a);
         }
 
-        // Intro slide distance (eases to 0 during spiral)
-        const slideIntro = SLIDE_PX_PER_SEC * (tIntro * INTRO_SECS); // px at end of intro
-        const slideNow = slideIntro * (1 - spiralMix);
+        const slideIntro=SLIDE_PX_PER_SEC*(tIntro*INTRO_SECS);
+        const slideNow=slideIntro*(1-sMix);
 
-        // Character cycling (slow)
-        const len = LINE.length;
-        const charOffset = Math.floor(now/5000) % len;
+        const len=LINE.length, charOffset=Math.floor(now/5000)%len;
 
-        for (let i=0;i<this.N;i++){
-          const r = this.rcR[i], c = this.rcC[i];
+        for(let i=0;i<this.N;i++){
+          const r=this.rcR[i], c=this.rcC[i];
+          const baseX_final=(c+0.5)*this.cellW+this.gridOffsetX;
+          const baseX_morph=baseX_final+slideNow;
+          const baseY=(r+0.5)*this.cellH+this.y0;
 
-          // Base static grid positions
-          const baseX_final = (c + 0.5) * this.cellW + this.gridOffsetX;     // zero-slide grid (used in orbit mode)
-          const baseX_morph = baseX_final + slideNow;                         // during spiral: base X still includes diminishing slide
-          const baseY = (r + 0.5) * this.cellH + this.y0;
+          let th=this.theta[i]; if(th>this.maxTheta){ th-=this.maxTheta; this.theta[i]=th; }
+          const rad=B_SPIRAL*th, sx=this.cx+rad*Math.cos(th), sy=this.cy+rad*Math.sin(th);
 
-          // Spiral coordinates (animated θ)
-          let th = this.theta[i];
-          if (th > this.maxTheta){ th -= this.maxTheta; this.theta[i]=th; }
-          const rad = B_SPIRAL * th;
-          const sx  = this.cx + rad*Math.cos(th);
-          const sy  = this.cy + rad*Math.sin(th);
+          let xPos,yPos;
+          if(sMix<1){ xPos=baseX_morph*(1-sMix)+sx*sMix; yPos=baseY*(1-sMix)+sy*sMix; }
+          else{ xPos=baseX_final; yPos=baseY; }
 
-          // During spiral: blend grid → spiral; After spiral: snap back to static grid for orbit mode
-          let xPos, yPos;
-          if (spiralMix < 1){
-            xPos = baseX_morph*(1-spiralMix) + sx*spiralMix;
-            yPos = baseY*(1-spiralMix) + sy*spiralMix;
-          } else {
-            xPos = baseX_final;
-            yPos = baseY;
+          // General text fades out 1→0 exactly over spiral
+          if(sMix<1){
+            const a=1-sMix;
+            if(a>0.02){ x.globalAlpha=a; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,xPos,yPos); }
           }
 
-          // --- Drawing ---
-          // 1) General text: visible before spiral; fades 1→0 exactly across the spiral duration.
-          if (spiralMix < 1){
-            const alpha = 1 - spiralMix;
-            if (alpha > 0.02){
-              ctx.globalAlpha = alpha;
-              const ch = LINE.charAt((i + charOffset) % len) || "•";
-              ctx.fillText(ch, xPos, yPos);
+          // Planet-disc text fades in 0→1 over spiral, drawn at final static grid
+          const ad=sMix;
+          if(ad>0.02){
+            let vis=false;
+            for(let k=0;k<this.orbitR.length;k++){
+              const dx=baseX_final-px[k], dy=baseY-py[k];
+              if(dx*dx+dy*dy<=PLANETS[k].disc*PLANETS[k].disc){ vis=true; break; }
             }
+            if(vis){ x.globalAlpha=ad; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,baseX_final,baseY); }
           }
 
-          // 2) Planet-disc text: cross-fades in across the same spiral window.
-          //    Always drawn at FINAL STATIC GRID positions (x = baseX_final, y = baseY).
-          const alphaDisc = spiralMix; // 0→1 over spiral
-          if (alphaDisc > 0.02){
-            // reveal only if inside any planet disc
-            let visible = false;
-            for (let k=0;k<this.orbitR.length;k++){
-              const dx = baseX_final - px[k], dy = baseY - py[k];
-              if (dx*dx + dy*dy <= PLANETS[k].disc*PLANETS[k].disc) { visible = true; break; }
-            }
-            if (visible){
-              ctx.globalAlpha = alphaDisc;
-              const ch = LINE.charAt((i + charOffset) % len) || "•";
-              ctx.fillText(ch, baseX_final, baseY);
-            }
-          }
-
-          // θ drift only while spiraling (gives life to the morph)
-          if (spiralMix < 1) this.theta[i] = th + SPEED_RAD_S*dt;
+          if(sMix<1) this.theta[i]=th+0.012*dt;
         }
-        ctx.globalAlpha = 1;
+        x.globalAlpha=1;
 
-        // Planets (solid dots)
-        ctx.save();
-        for (let k=0;k<this.orbitR.length;k++){
-          ctx.fillStyle = PLANETS[k].color;
-          ctx.beginPath(); ctx.arc(px[k], py[k], PLANETS[k].dot, 0, Math.PI*2); ctx.fill();
+        // Planets (solid)
+        for(let k=0;k<this.orbitR.length;k++){
+          x.fillStyle=PLANETS[k].color;
+          x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
         }
-        ctx.restore();
 
-        // HUD (dev)
-        const hud = document.getElementById('hud');
-        if (hud) hud.textContent =
-          `inline-orbits-r23 | intro=${tIntro.toFixed(2)} spiral=${spiralMix.toFixed(2)} | MarsR=${Math.round(this.orbitR[3])}px`;
+        // HUD
+        const hud=document.getElementById('hud'); if(hud) hud.textContent=`inline-orbits-r23 | intro=${tIntro.toFixed(2)} spiral=${sMix.toFixed(2)}`;
 
         requestAnimationFrame(this.tick.bind(this));
       }
     }
-
-    const TAG='vortex-show';
-    if (!customElements.get(TAG)) customElements.define(TAG, VortexShow);
+    const TAG='vortex-show'; if(!customElements.get(TAG)) customElements.define(TAG,VortexShow);
   })();
   </script>
 </body>
