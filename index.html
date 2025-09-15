@@ -432,8 +432,8 @@
           const px=this.cx + r*Math.cos(a);
           const py=this.cy + r*Math.sin(a);
           const w=this.omega[k];             // rad/s
-          const vx = -Math.sin(a)*r*w*0.5;   // HALF speed
-          const vy =  Math.cos(a)*r*w*0.5;   // HALF speed
+          const vx = -Math.sin(a)*r*w;   // HALF speed
+          const vy =  Math.cos(a)*r*w;   // HALF speed
           pos.push({x:px-this.cx, y:py-this.cy});
           vel.push({x:vx, y:vy});
           mass.push(PLANETS[k].m);
