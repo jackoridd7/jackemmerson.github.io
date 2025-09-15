@@ -8,10 +8,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson</title>
 
-  <!-- Smooth in-page scrolling -->
   <style>html{scroll-behavior:smooth}</style>
-
-  <!-- Visibility hot-fix -->
   <style id="hotfix-visible">html,body{opacity:1!important;background:#0f172a!important}</style>
   <script>
     (()=>{const f=()=>{document.documentElement.style.opacity='1';document.body.style.opacity='1'};document.addEventListener('DOMContentLoaded',f,{once:true});addEventListener('click',e=>{if(e.target?.closest?.('a'))f()},true)})();
@@ -19,13 +16,8 @@
 
   <style>
     :root{
-      --bg:#0f172a;
-      --bg2:#0b1324;
-      --ink:#e2e8f0;
-      --muted:#94a3b8;
-      --em:#6ee7b7;
-      --ring: rgba(255,255,255,.08);
-      --card-opaque: rgba(7,12,22,.88);
+      --bg:#0f172a; --ink:#e2e8f0; --muted:#94a3b8; --em:#6ee7b7;
+      --ring: rgba(255,255,255,.08); --card-opaque: rgba(7,12,22,.88);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -36,26 +28,21 @@
       line-height:1.4;
     }
 
-    /* ===== LAYERS ===== */
     vortex-show{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
 
-    /* NAV — right links only */
-    .nav{position:fixed; inset-inline:0; top:0; z-index:10; background:transparent}
-    .nav .row{max-width:1100px; margin:0 auto; padding:18px 24px; display:flex; align-items:center; justify-content:flex-end; gap:24px;}
-    .nav a{color:#cbd5e1; text-decoration:none; margin-left:24px}
+    /* NAV (right links only) */
+    .nav{position:fixed; inset-inline:0; top:0; z-index:10}
+    .nav .row{max-width:1100px; margin:0 auto; padding:18px 24px; display:flex; justify-content:flex-end; gap:24px}
+    .nav a{color:#cbd5e1; text-decoration:none}
     .nav a:hover{color:var(--em)}
 
-    /* HERO (translucent so effect is visible) */
-    .hero{
-      min-height:92vh; display:grid; place-items:center; padding:120px 24px 24px;
-      position:relative; z-index:5;
-    }
-    .hero .card{text-align:center; max-width:820px; transform:translateY(-6vh)}
+    /* HERO */
+    .hero{min-height:92vh; display:grid; place-items:center; padding:120px 24px 24px; position:relative; z-index:5}
+    .card{text-align:center; max-width:820px; transform:translateY(-6vh)}
     .h1{
-      font-weight:800; font-size:clamp(44px,8vw,84px); line-height:1.05; margin:0;
+      margin:0; font-weight:800; font-size:clamp(44px,8vw,84px); line-height:1.05;
       background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
       -webkit-background-clip:text; background-clip:text; color:transparent;
-      letter-spacing:.5px;
     }
     .sub{margin-top:18px; color:#cfd8e6; font-size:18px}
     .btns{margin-top:28px; display:flex; gap:14px; justify-content:center}
@@ -66,44 +53,26 @@
     .pill.ghost:hover{background:rgba(255,255,255,.16)}
     .scroll-cue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; letter-spacing:.2em}
 
-    /* Controls caption + buttons anchored bottom-right of hero */
-    .nb-wrap{
-      position:absolute; right:18px; bottom:18px; z-index:12;
-      display:flex; flex-direction:column; align-items:flex-end; gap:8px;
-    }
-    .nb-caption{
-      color:#cfe6ff; font-size:12px; text-align:right;
-      text-shadow:0 1px 4px rgba(0,0,0,.55);
-    }
+    /* Controls (bottom-right of hero) */
+    .nb-wrap{position:absolute; right:18px; bottom:18px; z-index:12; display:flex; flex-direction:column; align-items:flex-end; gap:8px}
+    .nb-caption{color:#cfe6ff; font-size:12px; text-align:right; text-shadow:0 1px 4px rgba(0,0,0,.55)}
     .nb-caption a{color:#93c5fd; text-decoration:underline}
-    .nb-controls{
-      display:flex; align-items:flex-end; gap:12px;
-    }
-    .nb-lead{
-      font-size:14px; color:#e2f1ff; font-weight:700; white-space:nowrap;
-      text-shadow:0 1px 4px rgba(0,0,0,.6);
-    }
-    .nb{
-      background:rgba(2,6,23,.7); color:#e5e7eb; border:1px solid rgba(255,255,255,.15);
-      padding:10px 14px; border-radius:12px; cursor:pointer;
-      display:flex; flex-direction:column; align-items:flex-start; gap:2px;
-      backdrop-filter:saturate(180%) blur(6px);
-    }
+    .nb-controls{display:flex; align-items:flex-end; gap:12px}
+    .nb-lead{font-size:14px; color:#e2f1ff; font-weight:700; white-space:nowrap; text-shadow:0 1px 4px rgba(0,0,0,.6)}
+    .nb{background:rgba(2,6,23,.7); color:#e5e7eb; border:1px solid rgba(255,255,255,.15);
+        padding:10px 14px; border-radius:12px; cursor:pointer;
+        display:flex; flex-direction:column; align-items:flex-start; gap:2px; backdrop-filter:saturate(180%) blur(6px)}
     .nb strong{font-size:13px; letter-spacing:.02em}
     .nb span{font-size:11px; color:#94a3b8}
 
     /* Debug toggle (bottom-left of hero) */
-    .dbg-btn{
-      position:absolute; left:18px; bottom:18px; z-index:12;
-      background:rgba(2,6,23,.7); color:#e5e7eb; border:1px solid rgba(255,255,255,.15);
-      padding:8px 12px; border-radius:10px; cursor:pointer; font-size:12px;
-      backdrop-filter:saturate(180%) blur(6px);
-    }
+    .dbg-btn{position:absolute; left:18px; bottom:18px; z-index:12; background:rgba(2,6,23,.7); color:#e5e7eb;
+             border:1px solid rgba(255,255,255,.15); padding:8px 12px; border-radius:10px; cursor:pointer; font-size:12px; backdrop-filter:saturate(180%) blur(6px)}
     .hud{position:fixed; left:8px; top:8px; z-index:50; background:rgba(2,6,23,.80); color:#cbd5e1;
          padding:8px 10px; border-radius:8px; font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
          display:none; white-space:pre; max-width:50vw}
 
-    /* CONTENT: ESA background with dark overlay (twice as dark) */
+    /* CONTENT (ESA background with dark overlay) */
     .content{
       position:relative; z-index:8;
       background:
@@ -115,32 +84,14 @@
     .content .wrap{max-width:1100px; margin:0 auto; padding:56px 24px 96px}
     .section-title{font-size:28px; letter-spacing:.02em; margin:0 0 6px}
     .section-sub{color:#eaf3ff; margin:0 0 32px}
+    .credit{position:absolute; right:16px; bottom:12px; color:#e7efff; font-size:12px; opacity:.9; user-select:none; text-shadow:0 1px 4px rgba(0,0,0,.6)}
 
-    /* bottom-right credit on the portfolio panel */
-    .credit{
-      position:absolute; right:16px; bottom:12px;
-      color:#e7efff; font-size:12px; opacity:.9; user-select:none;
-      text-shadow:0 1px 4px rgba(0,0,0,.6);
-    }
-
-    /* Portfolio cards: near-opaque backgrounds, square corners */
-    .ach{
-      display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
-      background:var(--card-opaque);
-      border:1px solid var(--ring);
-      border-radius:0;
-      padding:22px; margin:22px 0;
-      box-shadow:0 8px 18px rgba(0,0,0,.25);
-      backdrop-filter:saturate(140%) blur(4px);
-    }
+    /* Portfolio cards */
+    .ach{display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
+         background:var(--card-opaque); border:1px solid var(--ring); border-radius:0; padding:22px; margin:22px 0;
+         box-shadow:0 8px 18px rgba(0,0,0,.25); backdrop-filter:saturate(140%) blur(4px)}
     .ach:nth-child(even){grid-template-columns:1fr 1.2fr}
-    .ach__media{
-      aspect-ratio:4/3;
-      background:#0a1222;
-      border:1px solid var(--ring);
-      border-radius:0;
-      overflow:hidden
-    }
+    .ach__media{aspect-ratio:4/3; background:#0a1222; border:1px solid var(--ring); border-radius:0; overflow:hidden}
     .ach__media img{width:100%; height:100%; object-fit:cover; display:block}
     .ach__title{font-weight:700; font-size:22px; margin:0 0 4px}
     .ach__sub{color:#cfd8e6; margin:0 0 12px}
@@ -156,18 +107,15 @@
   </style>
 </head>
 <body>
-  <!-- Background orbit/spiral effect -->
   <vortex-show></vortex-show>
 
   <!-- NAV -->
   <header class="nav">
     <div class="row">
-      <div class="links">
-        <a href="#top">Home</a>
-        <a href="#portfolio">Portfolio</a>
-        <a href="tools.html">Tools</a>
-        <a href="shop.html">Shop</a>
-      </div>
+      <a href="#top">Home</a>
+      <a href="#portfolio">Portfolio</a>
+      <a href="tools.html">Tools</a>
+      <a href="shop.html">Shop</a>
     </div>
   </header>
 
@@ -183,7 +131,7 @@
     </section>
     <div class="scroll-cue">SCROLL</div>
 
-    <!-- Caption + buttons that “stick” with the orbital element -->
+    <!-- Controls -->
     <div class="nb-wrap">
       <div class="nb-caption">
         Coded by Jack Emmerson<br>
@@ -206,118 +154,88 @@
     <button id="debug-btn" class="dbg-btn" type="button">Debug</button>
   </main>
 
-  <!-- CONTENT PANEL -->
+  <!-- CONTENT -->
   <div class="content">
     <div class="wrap" id="portfolio">
       <h2 class="section-title">Portfolio</h2>
       <p class="section-sub">A selection of projects and experiments.</p>
 
-      <!-- 1) IAC logo.png -->
+      <!-- Presenter -->
       <article class="ach reveal">
         <div class="ach__body">
           <h3 class="ach__title">Presenter</h3>
           <p class="ach__sub">MAPS Mars Human Precursor Program</p>
-          <p class="ach__body">
-            Conference presentation exploring human-precursor mission concepts and technology pathways for sustained Mars exploration.
-          </p>
+          <p class="ach__body">Conference presentation exploring human-precursor mission concepts and technology pathways for sustained Mars exploration.</p>
         </div>
-        <div class="ach__media">
-          <img alt="IAC conference logo" loading="lazy" decoding="async" src="assets/portfolio/IAC%20logo.png" />
-        </div>
+        <div class="ach__media"><img alt="IAC conference logo" loading="lazy" decoding="async" src="assets/portfolio/IAC%20logo.png" /></div>
       </article>
 
-      <!-- 2) AURC.jpg -->
+      <!-- AURC -->
       <article class="ach reveal">
-        <div class="ach__media">
-          <img alt="RMIT HIVE AURC payload team imagery" loading="lazy" decoding="async" src="assets/portfolio/AURC.jpg" />
-        </div>
+        <div class="ach__media"><img alt="RMIT HIVE AURC payload team imagery" loading="lazy" decoding="async" src="assets/portfolio/AURC.jpg" /></div>
         <div class="ach__body">
           <h3 class="ach__title">Payload Team Lead</h3>
           <p class="ach__sub">RMIT HIVE AURC</p>
-          <p class="ach__body">
-            Led payload development for AURC: architecture, avionics, and integration—delivering robust flight hardware on a tight schedule.
-          </p>
+          <p class="ach__body">Led payload development for AURC: architecture, avionics, and integration—delivering robust flight hardware on a tight schedule.</p>
         </div>
       </article>
 
-      <!-- 3) ASCLEPIOSRecruitment.png -->
+      <!-- Asclepios -->
       <article class="ach reveal">
         <div class="ach__body">
           <h3 class="ach__title">Asclepios Analogue Astronaut</h3>
           <p class="ach__sub">EPFL Asclepios Analogue astronaut mission VI</p>
-          <p class="ach__body">
-            Selected for a high-fidelity analogue mission focusing on human factors, EVA protocols, and operations in constrained habitats.
-          </p>
+          <p class="ach__body">Selected for a high-fidelity analogue mission focusing on human factors, EVA protocols, and operations in constrained habitats.</p>
         </div>
-        <div class="ach__media">
-          <img alt="EPFL Asclepios recruitment poster" loading="lazy" decoding="async" src="assets/portfolio/ASCLEPIOSRecruitment.png" />
-        </div>
+        <div class="ach__media"><img alt="EPFL Asclepios recruitment poster" loading="lazy" decoding="async" src="assets/portfolio/ASCLEPIOSRecruitment.png" /></div>
       </article>
 
-      <!-- 4) 2024RASCAL.png -->
+      <!-- 2025 Co-Lead (above Student Pilot & 2024) -->
       <article class="ach reveal">
+        <div class="ach__media"><img alt="Fleet architecture chart for NASA RASC-AL" loading="lazy" decoding="async" src="assets/portfolio/Fleet%20Chart.jpg" /></div>
         <div class="ach__body">
-          <h3 class="ach__title">2024 NASA RASC-AL Team Lead</h3>
-          <p class="ach__sub">RMIT, Khalifa University, Clarkson University</p>
-          <p class="ach__body">
-            Managed cross-university collaboration—requirements, verification plans, and design reviews—culminating in a cohesive mission concept.
-          </p>
-        </div>
-        <div class="ach__media">
-          <img alt="RASC-AL 2024 team artwork" loading="lazy" decoding="async" src="assets/portfolio/2024RASCAL.png" />
+          <h3 class="ach__title">2025 NASA RASC-AL Co-Lead</h3>
+          <p class="ach__sub">RMIT × MIT = R(MIT)² NASA RASC-AL Competition Team</p>
+          <p class="ach__body">Co-leading a bi-institutional team on lunar surface logistics and Mars-forward systems; concept trades, mass budgets, and ops sims.</p>
         </div>
       </article>
 
-      <!-- NEW: Engineering Intern (below 2024) -->
-      <article class="ach reveal">
-        <div class="ach__media">
-          <img alt="Yarra Trams Melbourne CBD" loading="lazy" decoding="async" src="assets/portfolio/Tram.jpg" />
-        </div>
-        <div class="ach__body">
-          <h3 class="ach__title">Engineering Intern</h3>
-          <p class="ach__sub">Yarra Trams, Melbourne CBD</p>
-          <p class="ach__body">
-            Assisted with reliability analysis and on-network technical operations in Australia’s largest tram system.
-          </p>
-        </div>
-      </article>
-
-      <!-- NEW: Student Pilot (between 2024 and 2025) -->
+      <!-- Student Pilot (between 2025 and 2024) -->
       <article class="ach reveal">
         <div class="ach__body">
           <h3 class="ach__title">Student Pilot</h3>
           <p class="ach__sub">Topaz Rotax 912 Engine, Civillian</p>
-          <p class="ach__body">
-            Building hours and refining airmanship; focused on energy management, crosswind ops, and nav planning.
-          </p>
+          <p class="ach__body">Building hours and refining airmanship; focused on energy management, crosswind ops, and nav planning.</p>
         </div>
-        <div class="ach__media">
-          <img alt="Light sport aircraft flight" loading="lazy" decoding="async" src="assets/portfolio/flight.jpg" />
-        </div>
+        <div class="ach__media"><img alt="Light sport aircraft flight" loading="lazy" decoding="async" src="assets/portfolio/flight.jpg" /></div>
       </article>
 
-      <!-- 5) 2025 Co-Lead (now after Student Pilot) -->
+      <!-- 2024 Team Lead -->
       <article class="ach reveal">
-        <div class="ach__media">
-          <img alt="Fleet architecture chart for NASA RASC-AL" loading="lazy" decoding="async" src="assets/portfolio/Fleet%20Chart.jpg" />
-        </div>
         <div class="ach__body">
-          <h3 class="ach__title">2025 NASA RASC-AL Co-Lead</h3>
-          <p class="ach__sub">RMIT × MIT = R(MIT)² NASA RASC-AL Competition Team</p>
-          <p class="ach__body">
-            Co-leading a bi-institutional team on lunar surface logistics and Mars-forward systems; concept trades, mass budgets, and ops sims.
-          </p>
+          <h3 class="ach__title">2024 NASA RASC-AL Team Lead</h3>
+          <p class="ach__sub">RMIT, Khalifa University, Clarkson University</p>
+          <p class="ach__body">Managed cross-university collaboration—requirements, verification plans, and design reviews—culminating in a cohesive mission concept.</p>
+        </div>
+        <div class="ach__media"><img alt="RASC-AL 2024 team artwork" loading="lazy" decoding="async" src="assets/portfolio/2024RASCAL.png" /></div>
+      </article>
+
+      <!-- Engineering Intern (BOTTOM) -->
+      <article class="ach reveal">
+        <div class="ach__media"><img alt="Yarra Trams Melbourne CBD" loading="lazy" decoding="async" src="assets/portfolio/Tram.jpg" /></div>
+        <div class="ach__body">
+          <h3 class="ach__title">Engineering Intern</h3>
+          <p class="ach__sub">Yarra Trams, Melbourne CBD</p>
+          <p class="ach__body">Assisted with reliability analysis and on-network technical operations in Australia’s largest tram system.</p>
         </div>
       </article>
     </div>
-
-    <!-- ESA credit -->
     <div class="credit">Image © ESA</div>
   </div>
 
   <footer id="footer">© 2025 Jack Emmerson • <span class="email">S3946949@student.rmit.edu.au</span></footer>
 
-  <!-- Debug HUD (hidden until toggled) -->
+  <!-- Debug HUD -->
   <div id="hud" class="hud"></div>
 
   <!-- Reveal on scroll -->
@@ -332,29 +250,27 @@
     })();
   </script>
 
-  <!-- ====== Orbit/spiral effect with 5-body n-body + half-speed init, dots toggle, Sun dot in n-body, debug panel ====== -->
+  <!-- Orbits + n-body -->
   <script>
   (function(){
-    const VERSION = 'inline-orbits-r28';
-    const PLANETS = [
-      {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:4, disc:30, m:0.055},
-      {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:6, disc:38, m:0.815},
-      {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:7, disc:44, m:1.000},
-      {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:7, disc:50, m:0.107}
+    const VERSION='inline-orbits-r29';
+    const PLANETS=[
+      {name:"Mercury", a:0.3871, P:87.969,  color:"#cbd5e1", dot:4, disc:30, m:0.055},
+      {name:"Venus",   a:0.7233, P:224.701, color:"#fbbf24", dot:6, disc:38, m:0.815},
+      {name:"Earth",   a:1.0000, P:365.256, color:"#60a5fa", dot:7, disc:44, m:1.000},
+      {name:"Mars",    a:1.5237, P:686.980, color:"#f87171", dot:7, disc:50, m:0.107}
     ];
-    const SUN = {name:"Sun", color:"#fde68a", dot:9, m:333000}; // Earth-mass units (scaled)
+    const SUN={name:"Sun", color:"#fde68a", dot:9, m:333000};
 
     const INTRO_SECS=1.5, SLIDE_PX_PER_SEC=28, SPIRAL_MS=1200, B_SPIRAL=4.2, SPEED_RAD_S=0.012;
     const CELL_W=12, CELL_H=36, ROWS=40, CENTER_X=.5, CENTER_Y=.58, DAYS_PER_SEC=30;
     const WORDS=["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
     const LINE=(WORDS.join("•")+"•").replace(/ /g,"");
-    const clamp01=x=>Math.max(0,Math.min(1,x));
-    const easeCubic=t=>(t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2);
+    const clamp01=x=>Math.max(0,Math.min(1,x)), easeCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 
     class VortexShow extends HTMLElement{
       connectedCallback(){
-        this.c=document.createElement('canvas'); this.x=this.c.getContext('2d',{alpha:true});
-        this.appendChild(this.c);
+        this.c=document.createElement('canvas'); this.x=this.c.getContext('2d',{alpha:true}); this.appendChild(this.c);
         this.nbMode=false; this.nb={}; this.showDots=false; this.debug=false;
 
         const resize=()=>{
@@ -362,7 +278,6 @@
           this.c.width=Math.floor(innerWidth*dpr); this.c.height=Math.floor(innerHeight*dpr);
           this.c.style.width=innerWidth+"px"; this.c.style.height=innerHeight+"px";
           this.x.setTransform(dpr,0,0,dpr,0,0);
-
           this.cx=innerWidth*CENTER_X; this.cy=innerHeight*CENTER_Y;
 
           this.fontPx=Math.max(10,Math.floor(CELL_H*.61));
@@ -370,11 +285,9 @@
           const mw=Math.ceil(this.x.measureText("M").width)+2;
           this.cellW=Math.max(CELL_W,mw); this.cellH=CELL_H;
 
-          const slideMax=SLIDE_PX_PER_SEC*INTRO_SECS;
-          const extraCols=Math.ceil(slideMax/this.cellW)+2;
+          const slideMax=SLIDE_PX_PER_SEC*INTRO_SECS, extraCols=Math.ceil(slideMax/this.cellW)+2;
           this.cols=Math.max(1,Math.floor((innerWidth+extraCols*this.cellW*2)/this.cellW));
-          this.rows=Math.max(1,ROWS); this.N=Math.min(this.cols*this.rows,16000);
-          this.gridOffsetX=-extraCols*this.cellW;
+          this.rows=Math.max(1,ROWS); this.N=Math.min(this.cols*this.rows,16000); this.gridOffsetX=-extraCols*this.cellW;
 
           this.rcR=new Int16Array(this.N); this.rcC=new Int16Array(this.N);
           let k=0; for(let r=0;r<this.rows&&k<this.N;r++){ for(let c=0;c<this.cols&&k<this.N;c++,k++){ this.rcR[k]=r; this.rcC[k]=c; } }
@@ -384,8 +297,7 @@
           this.maxTheta=maxR/B_SPIRAL; this.theta=new Float32Array(this.N);
           for(let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
-          const minDim=Math.min(innerWidth,innerHeight);
-          const kpx=(0.45*minDim)/1.5237; // Mars outermost
+          const minDim=Math.min(innerWidth,innerHeight), kpx=(0.45*minDim)/1.5237;
           this.orbitR=PLANETS.map(p=>p.a*kpx);
 
           const daysNow=Date.now()/86400000;
@@ -398,48 +310,37 @@
         requestAnimationFrame(this.tick.bind(this));
 
         // Controls
-        this.toggleNBody = () => { if (!this.nbMode) this.initNBody(); else this.resetAnalytic(); };
-        this.toggleDots  = () => {
-          this.showDots = !this.showDots;
+        this.toggleNBody=()=>{ if(!this.nbMode) this.initNBody(); else this.resetAnalytic(); };
+        this.toggleDots=()=>{
+          this.showDots=!this.showDots;
           const b=document.getElementById('dots-btn');
-          if(b){ b.querySelector('strong').textContent = this.showDots ? 'Hide Planets' : 'Show Planets';
-                 b.querySelector('span').textContent   = this.showDots ? 'text-only rings' : 'restore dots'; }
+          if(b){ b.querySelector('strong').textContent=this.showDots?'Hide Planets':'Show Planets';
+                 b.querySelector('span').textContent=this.showDots?'text-only rings':'restore dots'; }
         };
-        this.toggleDebug = () => {
-          this.debug = !this.debug;
-          const hud=document.getElementById('hud');
-          hud.style.display = this.debug ? 'block' : 'none';
+        this.toggleDebug=()=>{
+          this.debug=!this.debug;
+          document.getElementById('hud').style.display=this.debug?'block':'none';
         };
 
-        // Sync initial label (hidden by default)
+        // Sync initial label
         const b=document.getElementById('dots-btn');
         if(b){ b.querySelector('strong').textContent='Show Planets'; b.querySelector('span').textContent='restore dots'; }
       }
 
-      // n-body initial state: Sun at center; planets from analytic positions, HALF velocities
+      // n-body start: Sun at center; planets at analytic positions WITH CURRENT velocities (no halving)
       initNBody(){
-        const now=performance.now();
-        const tSec=(now-this.t0)/1000;
+        const now=performance.now(), tSec=(now-this.t0)/1000;
         const pos=[], vel=[], mass=[];
-        // Sun
-        pos.push({x:0, y:0});
-        vel.push({x:0, y:0});
-        mass.push(SUN.m);
-        // Planets
+        pos.push({x:0, y:0}); vel.push({x:0, y:0}); mass.push(SUN.m); // Sun
         for(let k=0;k<this.orbitR.length;k++){
-          const r=this.orbitR[k];
-          const a=this.ang0[k]+this.omega[k]*tSec;
-          const px=this.cx + r*Math.cos(a);
-          const py=this.cy + r*Math.sin(a);
-          const w=this.omega[k];             // rad/s
-          const vx = -Math.sin(a)*r*w;   // HALF speed
-          const vy =  Math.cos(a)*r*w;   // HALF speed
-          pos.push({x:px-this.cx, y:py-this.cy});
-          vel.push({x:vx, y:vy});
-          mass.push(PLANETS[k].m);
+          const r=this.orbitR[k], a=this.ang0[k]+this.omega[k]*tSec;
+          const px=this.cx+r*Math.cos(a), py=this.cy+r*Math.sin(a);
+          const w=this.omega[k];
+          const vx=-Math.sin(a)*r*w;  // full analytic speed
+          const vy= Math.cos(a)*r*w;  // full analytic speed
+          pos.push({x:px-this.cx, y:py-this.cy}); vel.push({x:vx, y:vy}); mass.push(PLANETS[k].m);
         }
-        this.nb={pos,vel,mass};
-        this.nbMode=true;
+        this.nb={pos,vel,mass}; this.nbMode=true;
         const btn=document.getElementById('nb-btn');
         if(btn){ btn.querySelector('strong').textContent='Reset Orbits'; btn.querySelector('span').textContent='back to analytic'; }
       }
@@ -457,25 +358,21 @@
         x.textAlign="center"; x.textBaseline="middle"; x.fillStyle="#d7e0ee";
         x.font=`${this.fontPx}px "Courier New", monospace`;
 
-        const introMs=INTRO_SECS*1000;
-        const tIntro=clamp01((now-this.t0)/introMs);
-        const tSpiral=clamp01((now-(this.t0+introMs))/SPIRAL_MS);
+        const tIntro=clamp01((now-this.t0)/(INTRO_SECS*1000));
+        const tSpiral=clamp01((now-(this.t0+INTRO_SECS*1000))/SPIRAL_MS);
         const sMix=easeCubic(tSpiral);
 
-        let px=[], py=[], sunPX=this.cx, sunPY=this.cy;
-        let speeds=[]; // for debug (px/s)
+        let px=[], py=[], sunPX=this.cx, sunPY=this.cy, speeds=[];
 
-        if (!this.nbMode){
+        if(!this.nbMode){
           const tSec=(now-this.t0)/1000;
           for(let k=0;k<this.orbitR.length;k++){
-            const a=this.ang0[k]+this.omega[k]*tSec;
-            const r=this.orbitR[k], wRad=this.omega[k];
-            px[k]=this.cx+r*Math.cos(a);
-            py[k]=this.cy+r*Math.sin(a);
-            speeds[k]=Math.abs(r*wRad); // tangential speed (px/s)
+            const a=this.ang0[k]+this.omega[k]*tSec, r=this.orbitR[k], wRad=this.omega[k];
+            px[k]=this.cx+r*Math.cos(a); py[k]=this.cy+r*Math.sin(a);
+            speeds[k]=Math.abs(r*wRad);
           }
+          // sunPX/sunPY stay at center
         } else {
-          // 5-body (Sun+4): strong gravity with clamps
           const G=90000, EPS=30, MAX_ACC=400;
           const {pos,vel,mass}=this.nb; const N=pos.length;
           const ax=new Array(N).fill(0), ay=new Array(N).fill(0);
@@ -490,24 +387,19 @@
             }
           }
           for(let i=0;i<N;i++){
-            const aMag=Math.hypot(ax[i],ay[i]);
-            const clamp=aMag>MAX_ACC?MAX_ACC/aMag:1;
-            vel[i].x += ax[i]*clamp*dt;
-            vel[i].y += ay[i]*clamp*dt;
-            pos[i].x += vel[i].x*dt;
-            pos[i].y += vel[i].y*dt;
+            const aMag=Math.hypot(ax[i],ay[i]); const clamp=aMag>MAX_ACC?MAX_ACC/aMag:1;
+            vel[i].x += ax[i]*clamp*dt; vel[i].y += ay[i]*clamp*dt;
+            pos[i].x += vel[i].x*dt;   pos[i].y += vel[i].y*dt;
           }
           const pxB=[], pyB=[];
           for(let i=0;i<N;i++){ pxB[i]=this.cx+this.nb.pos[i].x; pyB[i]=this.cy+this.nb.pos[i].y; }
           sunPX=pxB[0]; sunPY=pyB[0];
-          px = pxB.slice(1); py = pyB.slice(1);
-          // speeds for planets (skip Sun at index 0)
-          speeds = this.nb.vel.slice(1).map(v=>Math.hypot(v.x,v.y));
+          px=pxB.slice(1); py=pyB.slice(1);
+          speeds=this.nb.vel.slice(1).map(v=>Math.hypot(v.x,v.y));
         }
 
-        // Intro text morph & planet-disc reveal (Sun not used for text reveal)
-        const slideIntro=SLIDE_PX_PER_SEC*(tIntro*INTRO_SECS);
-        const slideNow=slideIntro*(1-sMix);
+        // Text morph & reveal
+        const slideIntro=SLIDE_PX_PER_SEC*(tIntro*INTRO_SECS), slideNow=slideIntro*(1-sMix);
         const len=LINE.length, charOffset=Math.floor(now/5000)%len;
 
         for(let i=0;i<this.N;i++){
@@ -523,9 +415,7 @@
           if(sMix<1){ xPos=baseX_morph*(1-sMix)+sx*sMix; yPos=baseY*(1-sMix)+sy*sMix; }
           else{ xPos=baseX_final; yPos=baseY; }
 
-          if(sMix<1){
-            const a=1-sMix; if(a>0.02){ x.globalAlpha=a; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,xPos,yPos); }
-          }
+          if(sMix<1){ const a=1-sMix; if(a>0.02){ x.globalAlpha=a; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,xPos,yPos); } }
           const ad=sMix;
           if(ad>0.02){
             let vis=false;
@@ -539,16 +429,15 @@
         }
         x.globalAlpha=1;
 
-        // Planet dots + Sun dot (only when dots are enabled; Sun only drawn in n-body)
+        // Dots (planets + Sun). Sun should be visible even in analytic mode when dots are on.
         if(this.showDots){
+          // Planets
           for(let k=0;k<PLANETS.length;k++){
             x.fillStyle=PLANETS[k].color;
             x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
           }
-          if(this.nbMode){
-            x.fillStyle=SUN.color;
-            x.beginPath(); x.arc(sunPX,sunPY,SUN.dot,0,Math.PI*2); x.fill();
-          }
+          // Sun dot
+          x.fillStyle=SUN.color; x.beginPath(); x.arc(sunPX,sunPY,SUN.dot,0,Math.PI*2); x.fill();
         }
 
         // Debug HUD
@@ -556,11 +445,9 @@
           const hud=document.getElementById('hud');
           const mode=this.nbMode?'5-body':'analytic';
           const dots=this.showDots?'on':'off';
-          let lines=[`${VERSION}`, `mode=${mode} | dots=${dots}`];
-          lines.push('speeds (px/s):');
+          let lines=[`${VERSION}`, `mode=${mode} | dots=${dots}`,'speeds (px/s):'];
           for(let i=0;i<PLANETS.length;i++){
-            const name=PLANETS[i].name.padEnd(7,' ');
-            const sp = (speeds[i]||0).toFixed(2).padStart(8,' ');
+            const name=PLANETS[i].name.padEnd(7,' '), sp=(speeds[i]||0).toFixed(2).padStart(8,' ');
             lines.push(`  ${name}: ${sp}`);
           }
           hud.textContent=lines.join('\n');
@@ -571,12 +458,11 @@
     }
 
     if(!customElements.get('vortex-show')) customElements.define('vortex-show', VortexShow);
-
     window.addEventListener('DOMContentLoaded',()=>{
       const inst=document.querySelector('vortex-show');
       document.getElementById('nb-btn')  ?.addEventListener('click',()=>inst?.toggleNBody && inst.toggleNBody());
       document.getElementById('dots-btn')?.addEventListener('click',()=>inst?.toggleDots  && inst.toggleDots());
-      document.getElementById('debug-btn')?.addEventListener('click',()=>inst?.toggleDebug && inst.toggleDebug());
+      document.getElementById('debug-btn')?.addEventListener('click',()=>inst?.toggleDebug&& inst.toggleDebug());
     });
   })();
   </script>
