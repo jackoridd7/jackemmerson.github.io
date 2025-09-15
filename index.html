@@ -8,6 +8,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Jack Emmerson – Designing Tomorrow</title>
 
+  <!-- Smooth in-page scrolling -->
+  <style>html{scroll-behavior:smooth}</style>
+
   <!-- Visibility hot-fix -->
   <style id="hotfix-visible">html,body{opacity:1!important;background:#0f172a!important}</style>
   <script>
@@ -34,7 +37,7 @@
     }
 
     /* ==== LAYERS ==== */
-    /* Canvas effect lives UNDER everything */
+    /* Canvas effect under everything */
     vortex-show{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
 
     /* Top navigation */
@@ -44,7 +47,7 @@
     .nav a:hover{color:var(--em)}
     .brand{display:inline-block; width:28px; height:28px; border-radius:10px; background:#10b981; margin-right:10px; vertical-align:middle}
 
-    /* HERO area stays translucent so you see the effect */
+    /* HERO (translucent so effect is visible) */
     .hero{
       min-height:92vh; display:grid; place-items:center; padding:120px 24px 24px;
       position:relative; z-index:5;
@@ -63,30 +66,36 @@
     .pill.primary:hover{background:rgba(16,185,129,.28)}
     .pill.ghost{background:rgba(255,255,255,.08); color:#e5e7eb}
     .pill.ghost:hover{background:rgba(255,255,255,.16)}
-
     .scroll-cue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; letter-spacing:.2em}
 
-    /* ==== CONTENT PANEL that COVERS the canvas on scroll ==== */
+    /* CONTENT PANEL (covers the canvas on scroll) */
     .content{
-      position:relative; z-index:8;       /* above the canvas */
+      position:relative; z-index:8;
       background:linear-gradient(to bottom, var(--bg) 0%, var(--bg2) 100%);
       border-top:1px solid var(--ring);
       box-shadow:0 -24px 64px rgba(0,0,0,.45) inset;
-      /* create new stacking context so it fully covers */
       isolation:isolate;
     }
-
     .content .wrap{max-width:1100px; margin:0 auto; padding:56px 24px 96px}
-
     .section-title{font-size:28px; letter-spacing:.02em; margin:0 0 6px}
     .section-sub{color:var(--muted); margin:0 0 32px}
 
-    /* Achievements grid */
-    .ach{display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
-         background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
-         border:1px solid var(--ring); border-radius:18px; padding:22px; margin:22px 0;}
+    /* Portfolio grid (NO ROUNDED CORNERS) */
+    .ach{
+      display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+      border:1px solid var(--ring);
+      border-radius:0;      /* <- square corners */
+      padding:22px; margin:22px 0;
+    }
     .ach:nth-child(even){grid-template-columns:1fr 1.2fr}
-    .ach__media{aspect-ratio:4/3; background:radial-gradient(ellipse at 30% 20%, #0f1b34 0, #0a1222 60%); border:1px solid var(--ring); border-radius:14px; overflow:hidden}
+    .ach__media{
+      aspect-ratio:4/3;
+      background:radial-gradient(ellipse at 30% 20%, #0f1b34 0, #0a1222 60%);
+      border:1px solid var(--ring);
+      border-radius:0;      /* <- square corners */
+      overflow:hidden
+    }
     .ach__media img{width:100%; height:100%; object-fit:cover; display:block}
     .ach__title{font-weight:700; font-size:22px; margin:0 0 4px}
     .ach__sub{color:var(--muted); margin:0 0 12px}
@@ -95,9 +104,7 @@
     /* Reveal on scroll */
     .reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease}
     .reveal.in{opacity:1; transform:none}
-    @media (prefers-reduced-motion:reduce){
-      .reveal{transition:none}
-    }
+    @media (prefers-reduced-motion:reduce){ .reveal{transition:none} }
 
     footer{position:relative; z-index:8; text-align:center; color:#94a3b8; font-size:14px; padding:28px 0}
     .hud{position:fixed; left:8px; top:8px; z-index:50; background:rgba(2,6,23,.65); color:#cbd5e1;
@@ -105,7 +112,7 @@
   </style>
 </head>
 <body>
-  <!-- Background effect (under everything) -->
+  <!-- Background effect -->
   <vortex-show></vortex-show>
 
   <!-- NAV -->
@@ -114,52 +121,59 @@
       <div><span class="brand"></span><strong>Jack Emmerson</strong></div>
       <div>
         <a href="#top">Jack</a>
+        <a href="#portfolio">Portfolio</a>
         <a href="tools.html">Tools</a>
         <a href="shop.html">Shop</a>
       </div>
     </div>
   </header>
 
-  <!-- HERO (translucent; shows the effect) -->
+  <!-- HERO -->
   <main id="top" class="hero">
     <section class="card">
       <h1 class="h1">Designing&nbsp;Tomorrow</h1>
       <p class="sub">Aerospace engineering, CFD wizardry &amp; orbital mechanics — built in public.</p>
       <div class="btns">
-        <a class="pill primary" href="tools.html">Explore Tools</a>
+        <a class="pill primary" href="#portfolio">Portfolio</a>
         <a class="pill ghost" href="mailto:sidwellcourtney@gmail.com">Contact</a>
       </div>
     </section>
     <div class="scroll-cue">SCROLL</div>
   </main>
 
-  <!-- CONTENT PANEL (covers the canvas as you scroll) -->
+  <!-- CONTENT PANEL -->
   <div class="content">
-    <div class="wrap">
-      <h2 class="section-title">Achievements</h2>
-      <p class="section-sub">Selected projects, publications & hands-on experiments.</p>
+    <div class="wrap" id="portfolio">
+      <h2 class="section-title">Portfolio</h2>
+      <p class="section-sub">A selection of projects and experiments.</p>
 
-      <!-- Cards (replace text/images with your own) -->
+      <!-- Cards (replace images/words as you wish) -->
       <article class="ach reveal">
         <div class="ach__body">
           <h3 class="ach__title">Micro UAV Capstone</h3>
           <p class="ach__sub">Deployable from a sounding rocket</p>
-          <p class="ach__body">Designed and tested a 2U form-factor UAV for rapid deployment. Flight dynamics modeled in JSBSim; onboard mission logic in C++.</p>
+          <p class="ach__body">
+            Designed and tested a 2U form-factor UAV for rapid deployment. Flight dynamics modeled in JSBSim; onboard mission logic in C++.
+          </p>
         </div>
         <div class="ach__media">
-          <!-- Replace with your image -->
-          <img alt="" src="https://images.unsplash.com/photo-1518281420975-50db6e5d0a97?q=80&w=1200&auto=format&fit=crop" />
+          <!-- Replace with your file, e.g. assets/portfolio/uav.jpg -->
+          <img alt="" loading="lazy" decoding="async"
+               src="https://images.unsplash.com/photo-1518281420975-50db6e5d0a97?q=80&w=1200&auto=format&fit=crop" />
         </div>
       </article>
 
       <article class="ach reveal">
         <div class="ach__media">
-          <img alt="" src="https://images.unsplash.com/photo-1517976487492-5768de1f3c52?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="" loading="lazy" decoding="async"
+               src="https://images.unsplash.com/photo-1517976487492-5768de1f3c52?q=80&w=1200&auto=format&fit=crop" />
         </div>
         <div class="ach__body">
           <h3 class="ach__title">CFD Toolkit</h3>
           <p class="ach__sub">Open-source solvers & visualizers</p>
-          <p class="ach__body">Built JS/WebGL prototypes for inviscid flows and shock visualization; exported to WASM for speed.</p>
+          <p class="ach__body">
+            WebGL prototypes for inviscid flows and shock visualization; exported to WASM for speed.
+          </p>
         </div>
       </article>
 
@@ -167,21 +181,27 @@
         <div class="ach__body">
           <h3 class="ach__title">Orbital Mechanics Playground</h3>
           <p class="ach__sub">Intuitive Δv + transfer explorer</p>
-          <p class="ach__body">Interactive tool for Hohmann/bi-elliptic transfers and plane changes. Numerics validated against poliastro.</p>
+          <p class="ach__body">
+            Interactive tool for Hohmann/bi-elliptic transfers and plane changes. Numerics validated against poliastro.
+          </p>
         </div>
         <div class="ach__media">
-          <img alt="" src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="" loading="lazy" decoding="async"
+               src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" />
         </div>
       </article>
 
       <article class="ach reveal">
         <div class="ach__media">
-          <img alt="" src="https://images.unsplash.com/photo-1605649487212-47bdab064df3?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="" loading="lazy" decoding="async"
+               src="https://images.unsplash.com/photo-1605649487212-47bdab064df3?q=80&w=1200&auto=format&fit=crop" />
         </div>
         <div class="ach__body">
           <h3 class="ach__title">p5.js “Asteroids” Clone</h3>
           <p class="ach__sub">Physics-first, tiny footprint</p>
-          <p class="ach__body">A few hundred lines of code, deterministic collisions, and crisp feel tuned by frame-level telemetry.</p>
+          <p class="ach__body">
+            A few hundred lines, deterministic collisions, and crisp feel tuned by frame-level telemetry.
+          </p>
         </div>
       </article>
     </div>
@@ -202,7 +222,7 @@
     })();
   </script>
 
-  <!-- ====== Orbit text effect (same r23 logic, layered UNDER content) ====== -->
+  <!-- ====== Orbit/spiral effect (Mars outermost, with cross-fade) ====== -->
   <script>
   (function(){
     /* Planets (Mercury..Mars; Mars outermost; larger discs/dots) */
@@ -221,8 +241,7 @@
 
     class VortexShow extends HTMLElement{
       connectedCallback(){
-        this.c=document.createElement('canvas');
-        this.x=this.c.getContext('2d',{alpha:true});
+        this.c=document.createElement('canvas'); this.x=this.c.getContext('2d',{alpha:true});
         this.appendChild(this.c);
 
         const resize=()=>{
@@ -246,7 +265,6 @@
 
           this.rcR=new Int16Array(this.N); this.rcC=new Int16Array(this.N);
           let k=0; for(let r=0;r<this.rows&&k<this.N;r++){ for(let c=0;c<this.cols&&k<this.N;c++,k++){ this.rcR[k]=r; this.rcC[k]=c; } }
-
           this.y0=this.cy-(this.rows*this.cellH)/2;
 
           const maxR=Math.hypot(Math.max(this.cx,innerWidth-this.cx),Math.max(this.cy,innerHeight-this.cy))+60;
@@ -254,7 +272,7 @@
           for(let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
           const minDim=Math.min(innerWidth,innerHeight);
-          const kpx=(0.45*minDim)/1.5237; // Mars outermost
+          const kpx=(0.45*minDim)/1.5237; // Mars outermost scale
           this.orbitR=PLANETS.map(p=>p.a*kpx);
 
           const daysNow=Date.now()/86400000;
@@ -303,13 +321,12 @@
           if(sMix<1){ xPos=baseX_morph*(1-sMix)+sx*sMix; yPos=baseY*(1-sMix)+sy*sMix; }
           else{ xPos=baseX_final; yPos=baseY; }
 
-          // General text fades out 1→0 exactly over spiral
+          // General text fades out 1→0 over spiral
           if(sMix<1){
-            const a=1-sMix;
-            if(a>0.02){ x.globalAlpha=a; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,xPos,yPos); }
+            const a=1-sMix; if(a>0.02){ x.globalAlpha=a; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,xPos,yPos); }
           }
 
-          // Planet-disc text fades in 0→1 over spiral, drawn at final static grid
+          // Planet-disc text fades in 0→1 over spiral, at final grid
           const ad=sMix;
           if(ad>0.02){
             let vis=false;
@@ -325,13 +342,13 @@
         x.globalAlpha=1;
 
         // Planets (solid)
-        for(let k=0;k<this.orbitR.length;k++){
+        for(let k=0;k	this.orbitR.length;k++){
           x.fillStyle=PLANETS[k].color;
           x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
         }
 
-        // HUD
-        const hud=document.getElementById('hud'); if(hud) hud.textContent=`inline-orbits-r23 | intro=${tIntro.toFixed(2)} spiral=${sMix.toFixed(2)}`;
+        const hud=document.getElementById('hud');
+        if(hud) hud.textContent=`inline-orbits-r23 | intro=${tIntro.toFixed(2)} spiral=${sMix.toFixed(2)}`;
 
         requestAnimationFrame(this.tick.bind(this));
       }
