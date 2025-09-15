@@ -66,11 +66,17 @@
     .pill.ghost:hover{background:rgba(255,255,255,.16)}
     .scroll-cue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; letter-spacing:.2em}
 
-    /* Button group stays with the hero/orbital element */
+    /* Button/caption group that “sticks” with the hero/orbital element */
     .nb-wrap{
       position:absolute; right:18px; bottom:18px; z-index:12;
       display:flex; gap:10px; align-items:flex-end;
     }
+    .nb-col{display:flex; flex-direction:column; gap:8px; align-items:flex-end}
+    .nb-caption{
+      color:#cfe6ff; font-size:12px; text-align:right;
+      text-shadow:0 1px 4px rgba(0,0,0,.55);
+    }
+    .nb-caption a{color:#93c5fd; text-decoration:underline}
     .nb{
       background:rgba(2,6,23,.7); color:#e5e7eb; border:1px solid rgba(255,255,255,.15);
       padding:10px 14px; border-radius:12px; cursor:pointer;
@@ -80,21 +86,18 @@
     .nb strong{font-size:13px; letter-spacing:.02em}
     .nb span{font-size:11px; color:#94a3b8}
 
-    /* CONTENT PANEL uses your ESA image directly (no dark overlay) */
+    /* CONTENT: ESA background with HALF-opacity dark overlay */
     .content{
       position:relative; z-index:8;
-      background: url('assets/portfolio/ESAM31Capture.jpg') center/cover no-repeat fixed;
+      background:
+        linear-gradient(to bottom, rgba(15,23,42,.46) 0%, rgba(11,19,36,.48) 100%),
+        url('assets/portfolio/ESAM31Capture.jpg') center/cover no-repeat fixed;
       border-top:1px solid var(--ring);
       isolation:isolate;
     }
-    .content::before{
-      /* No global dark layer */
-      content:"";
-      position:absolute; inset:0; pointer-events:none; opacity:0;
-    }
     .content .wrap{max-width:1100px; margin:0 auto; padding:56px 24px 96px}
-    .section-title{font-size:28px; letter-spacing:.02em; margin:0 0 6px; text-shadow:0 2px 6px rgba(0,0,0,.35)}
-    .section-sub{color:#f0f6ff; margin:0 0 32px; text-shadow:0 1px 4px rgba(0,0,0,.35)}
+    .section-title{font-size:28px; letter-spacing:.02em; margin:0 0 6px}
+    .section-sub{color:#eaf3ff; margin:0 0 32px}
 
     /* bottom-right credit on the portfolio panel */
     .credit{
@@ -165,16 +168,24 @@
     </section>
     <div class="scroll-cue">SCROLL</div>
 
-    <!-- Button group that “sticks” with the orbital element -->
+    <!-- Caption + buttons that “stick” with the orbital element -->
     <div class="nb-wrap">
-      <button id="dots-btn" class="nb" type="button">
-        <strong>Hide Planets</strong>
-        <span>text-only rings</span>
-      </button>
-      <button id="nb-btn" class="nb" type="button">
-        <strong>Remove Sun</strong>
-        <span>n-body chaos</span>
-      </button>
+      <div class="nb-col">
+        <div class="nb-caption">
+          Coded by Jack Emmerson<br>
+          <a href="https://github.com/jackoridd7/jackemmerson.github.io" target="_blank" rel="noopener">GitHub Repository</a>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button id="dots-btn" class="nb" type="button">
+            <strong>Show Planets</strong>
+            <span>restore dots</span>
+          </button>
+          <button id="nb-btn" class="nb" type="button">
+            <strong>Remove Sun</strong>
+            <span>n-body chaos</span>
+          </button>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -270,7 +281,7 @@
   </div>
 
   <footer>© 2025 Jack Emmerson</footer>
-  <div id="hud" class="hud">inline-orbits-r25 | ready</div>
+  <div id="hud" class="hud">inline-orbits-r26 | ready</div>
 
   <!-- Reveal on scroll -->
   <script>
@@ -284,7 +295,7 @@
     })();
   </script>
 
-  <!-- ====== Orbit/spiral effect with n-body toggle & dots toggle ====== -->
+  <!-- ====== Orbit/spiral effect with stronger n-body + half-speed init & dots toggle ====== -->
   <script>
   (function(){
     const PLANETS = [
@@ -304,7 +315,7 @@
       connectedCallback(){
         this.c=document.createElement('canvas'); this.x=this.c.getContext('2d',{alpha:true});
         this.appendChild(this.c);
-        this.nbMode=false; this.nb={}; this.showDots=true;
+        this.nbMode=false; this.nb={}; this.showDots=false; // hidden by default
 
         const resize=()=>{
           const dpr=Math.max(1,devicePixelRatio||1);
@@ -346,7 +357,7 @@
         this.t0=performance.now(); this.last=this.t0;
         requestAnimationFrame(this.tick.bind(this));
 
-        // Expose control methods
+        // Exposed controls
         this.toggleNBody = () => { if (!this.nbMode) this.initNBody(); else this.resetAnalytic(); };
         this.toggleDots  = () => {
           this.showDots = !this.showDots;
@@ -354,9 +365,13 @@
           if(b){ b.querySelector('strong').textContent = this.showDots ? 'Hide Planets' : 'Show Planets';
                  b.querySelector('span').textContent   = this.showDots ? 'text-only rings' : 'restore dots'; }
         };
+
+        // sync initial button label (since default is hidden)
+        const b=document.getElementById('dots-btn');
+        if(b){ b.querySelector('strong').textContent='Show Planets'; b.querySelector('span').textContent='restore dots'; }
       }
 
-      // Build n-body initial state from current analytic positions, ZERO velocities
+      // Build n-body initial state from current analytic positions, HALF velocities
       initNBody(){
         const now=performance.now();
         const tSec=(now-this.t0)/1000;
@@ -366,8 +381,11 @@
           const a=this.ang0[k]+this.omega[k]*tSec;
           const px=this.cx + r*Math.cos(a);
           const py=this.cy + r*Math.sin(a);
+          const w=this.omega[k];             // rad/s
+          const vx = -Math.sin(a)*r*w*0.5;   // HALF the analytic speed
+          const vy =  Math.cos(a)*r*w*0.5;   // HALF the analytic speed
           pos.push({x:px-this.cx, y:py-this.cy});   // center-relative
-          vel.push({x:0, y:0});                    // <- zero initial velocity
+          vel.push({x:vx, y:vy});
           mass.push(PLANETS[k].m);
         }
         this.nb={pos,vel,mass};
@@ -403,8 +421,8 @@
             py[k]=this.cy+this.orbitR[k]*Math.sin(a);
           }
         } else {
-          // n-body: integrate in pixel space, center as origin (no sun)
-          const G=25000, EPS=40, MAX_ACC=200;
+          // n-body: stronger gravity
+          const G=90000, EPS=30, MAX_ACC=400;
           const {pos,vel,mass}=this.nb; const N=pos.length;
           const ax=new Array(N).fill(0), ay=new Array(N).fill(0);
           for(let i=0;i<N;i++){
@@ -462,7 +480,7 @@
         }
         x.globalAlpha=1;
 
-        // Planet dots (toggleable)
+        // Planet dots (toggleable) — start hidden
         if(this.showDots){
           for(let k=0;k<PLANETS.length;k++){
             x.fillStyle=PLANETS[k].color;
@@ -471,7 +489,7 @@
         }
 
         const hud=document.getElementById('hud');
-        if(hud) hud.textContent=`inline-orbits-r25 | mode=${this.nbMode?'n-body':'analytic'} | dots=${this.showDots?'on':'off'}`;
+        if(hud) hud.textContent=`inline-orbits-r26 | mode=${this.nbMode?'n-body':'analytic'} | dots=${this.showDots?'on':'off'}`;
 
         requestAnimationFrame(this.tick.bind(this));
       }
