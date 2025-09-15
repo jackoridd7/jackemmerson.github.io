@@ -1,62 +1,81 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Tools – Jack Emmerson</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
-  <style>body{background:radial-gradient(#0f172a 20%,#020617 80%);}</style>
-  <script defer src="assets/site.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tools — Jack Emmerson</title>
+  <style>
+    :root{
+      --bg:#0f172a; --bg2:#0b1324; --ink:#e2e8f0; --muted:#94a3b8; --em:#6ee7b7;
+      --ring: rgba(255,255,255,.08); --card:#0b1222;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      background: radial-gradient(1200px 800px at 50% 40%, var(--bg), #020617);
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+      line-height:1.45;
+    }
+    .nav{position:fixed; inset-inline:0; top:0; z-index:10;}
+    .nav .row{max-width:1100px; margin:0 auto; padding:18px 24px; display:flex; align-items:center; justify-content:space-between;}
+    .nav a{color:#cbd5e1; text-decoration:none; margin-left:24px}
+    .nav a:hover{color:var(--em)}
+    .brand{display:inline-block; width:28px; height:28px; border-radius:10px; background:#10b981; margin-right:10px; vertical-align:middle}
+    .wrap{max-width:1100px; margin:0 auto; padding:130px 24px 48px}
+    h1{margin:0 0 4px; font-size:clamp(42px,7vw,72px); line-height:1.05; font-weight:800;
+       background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
+       -webkit-background-clip:text; background-clip:text; color:transparent;}
+    .sub{margin:0 0 24px; color:#cbd5e1; font-size:18px}
+    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+      border:1px solid var(--ring); padding:18px; border-radius:12px;
+    }
+    .card h3{margin:0 0 6px; font-size:20px}
+    .pill{display:inline-block; margin-top:14px; padding:10px 18px; border-radius:9999px;
+          border:1px solid rgba(255,255,255,.15); color:#e5e7eb; text-decoration:none;}
+    .pill:hover{background:rgba(255,255,255,.08)}
+    .muted{color:#9fb0c8; font-size:14px}
+    footer{padding:28px 0 40px; text-align:center; color:#94a3b8}
+  </style>
 </head>
-
-<body class="text-slate-100 font-sans leading-relaxed">
-  <!-- NAV (same as index) -->
-  <header class="fixed top-0 inset-x-0 z-20">
-    <nav class="max-w-7xl mx-auto flex justify-between items-center p-6">
-      <div class="flex items-center gap-3">
-        <img src="assets/logo.svg" alt="logo" class="h-8 w-8" />
-        <span class="font-semibold tracking-wide">Jack Emmerson</span>
+<body>
+  <header class="nav">
+    <div class="row">
+      <div><span class="brand"></span><strong>Jack Emmerson</strong></div>
+      <div>
+        <a href="index.html#top">Jack</a>
+        <a href="index.html#portfolio">Portfolio</a>
+        <a href="tools.html">Tools</a>
+        <a href="shop.html">Shop</a>
       </div>
-      <div class="space-x-6 text-slate-300">
-        <a data-tab="jack"  href="index.html"  class="nav-link hover:text-emerald-300">Jack</a>
-        <a data-tab="tools" href="tools.html" class="nav-link hover:text-emerald-300">Tools</a>
-        <a data-tab="shop"  href="shop.html"  class="nav-link hover:text-emerald-300">Shop</a>
-      </div>
-    </nav>
+    </div>
   </header>
 
-  <section class="max-w-7xl mx-auto pt-32 pb-20 px-6">
-    <h1 class="text-4xl font-bold mb-10">Interactive Tools</h1>
+  <main class="wrap">
+    <h1>Tools</h1>
+    <p class="sub">Researchy prototypes and space-adjacent utilities.</p>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-      <!-- Card -->
-      <a href="tools/asteroids.html"
-         class="group block bg-slate-800 rounded-2xl p-6 shadow-xl
-                hover:-translate-y-1 transition">
-        <h2 class="font-semibold text-xl mb-2 group-hover:text-emerald-300">
-          Asteroids Clone
-        </h2>
-        <p class="text-slate-400 text-sm">
-          A classic arcade remake using p5.js and plain JS.
-        </p>
-      </a>
-      <!-- Card -->
-      <a href="tools/deltaV.html"
-         class="group block bg-slate-800 rounded-2xl p-6 shadow-xl
-                hover:-translate-y-1 transition">
-        <h2 class="font-semibold text-xl mb-2 group-hover:text-emerald-300">
-          Δv Calculator
-        </h2>
-        <p class="text-slate-400 text-sm">
-          Instant orbital manoeuvre maths in the browser.
-        </p>
-      </a>
-      <!-- Add more cards as you build more tools -->
-    </div>
-  </section>
+    <section class="grid">
+      <article class="card">
+        <h3>Asteroid Flyby Calculator</h3>
+        <p class="muted">WIP — contact me if you're interested in this project!</p>
+        <a class="pill" href="mailto:sidwellcourtney@gmail.com">Contact</a>
+      </article>
 
-  <footer class="text-center text-slate-500 text-sm py-6">
-    &copy; 2025 Jack Emmerson
-  </footer>
+      <article class="card">
+        <h3>TLE Determination Tool</h3>
+        <p class="muted">Parameter estimation &amp; fitting from sparse observations (prototype).</p>
+        <a class="pill" href="mailto:sidwellcourtney@gmail.com">Contact</a>
+      </article>
+    </section>
+
+    <p style="margin-top:22px;">
+      <a class="pill" href="index.html#top">Back to Home</a>
+    </p>
+  </main>
+
+  <footer>© 2025 Jack Emmerson</footer>
 </body>
 </html>
