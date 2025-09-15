@@ -89,88 +89,69 @@
   <footer>© 2025 Jack Emmerson</footer>
   <div id="hud" class="hud">booting…</div>
 
-  <!-- EFFECT: intro right-slide → spiral → static grid masked by planet discs  (inline-orbits-r22) -->
+  <!-- EFFECT: intro (right-slide) → spiral (text fades 1→0 during spiral) → static grid with planet-disc reveal -->
   <script>
   (function(){
-    /* ===================== Config ===================== */
-    // Planets (Mercury..Jupiter only; Jupiter outermost)
+    /* -------- Config (tweak as you like) -------- */
+    // Mercury..Mars only (Mars = outermost). Bigger dots & reveal discs.
     const PLANETS = [
-      {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:2, disc:22},
-      {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:3, disc:26},
-      {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:3, disc:28},
-      {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:3, disc:26},
-      {name:"Jupiter", a:5.2026, P:4332.590, color:"#f59e0b", dot:4, disc:34}
+      {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:4, disc:30},
+      {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:6, disc:38},
+      {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:7, disc:44},
+      {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:7, disc:50}
     ];
 
-    // Phases
-    const INTRO_SECS   = 3.0;     // readable right-slide
-    const SPIRAL_MS    = 1200;    // rows → spiral morph
-    const ORBIT_FADE_MS= 700;     // fade to disc-only reveal
+    const INTRO_SECS = 1.5;             // half the old time
+    const SLIDE_PX_PER_SEC = 28;        // gentle readable speed
 
-    // Intro motion
-    const SLIDE_PX_PER_SEC = 28;  // slide right speed
+    const SPIRAL_MS = 1200;             // spiral duration (fade is tied to this)
+    const B_SPIRAL = 4.2;               // r = B * θ
+    const SPEED_RAD_S = 0.012;          // θ drift while spiraling
 
-    // Spiral
-    const B_SPIRAL = 4.2;         // r = B * θ
-    const SPEED_RAD_S = 0.012;    // angular drift during spiral
+    const CELL_W = 12, CELL_H = 36, ROWS = 40;
+    const CENTER_X = 0.5, CENTER_Y = 0.58;
+    const DAYS_PER_SEC = 30;            // solar-system speed
 
-    // Grid
-    const CELL_W=12, CELL_H=36, ROWS=40;
-    const CENTER_X=0.5, CENTER_Y=0.58;
-
-    // Solar time
-    const DAYS_PER_SEC = 30;
-
-    // Text content
     const WORDS = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
     const LINE = (WORDS.join("•")+"•").replace(/ /g,"");
 
-    /* ===================== Helpers ===================== */
+    /* -------- Helpers -------- */
     const clamp01 = x => Math.max(0, Math.min(1, x));
     const easeCubic = t => (t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2);
-    const lerp = (a,b,t) => a + (b-a)*t;
 
-    /* ===================== Custom element ===================== */
     class VortexShow extends HTMLElement {
       connectedCallback(){
-        // Canvas
         this.c = document.createElement('canvas');
-        this.x = this.c.getContext('2d', {alpha:true});
+        this.ctx = this.c.getContext('2d', {alpha:true});
         this.appendChild(this.c);
 
-        // Sizing and precompute
         const resize = () => {
           const dpr = Math.max(1, devicePixelRatio||1);
           this.c.width  = Math.floor(innerWidth*dpr);
           this.c.height = Math.floor(innerHeight*dpr);
           this.c.style.width  = innerWidth+"px";
           this.c.style.height = innerHeight+"px";
-          this.x.setTransform(dpr,0,0,dpr,0,0);
+          this.ctx.setTransform(dpr,0,0,dpr,0,0);
 
-          // Center
           this.cx = innerWidth*CENTER_X;
           this.cy = innerHeight*CENTER_Y;
 
-          // Font & cell
+          // Font + cell
           this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
-          this.x.font = `${this.fontPx}px "Courier New", monospace`;
-          const mw = Math.ceil(this.x.measureText("M").width)+2;
+          this.ctx.font = `${this.fontPx}px "Courier New", monospace`;
+          const mw = Math.ceil(this.ctx.measureText("M").width)+2;
           this.cellW = Math.max(CELL_W, mw);
           this.cellH = CELL_H;
 
-          // Max right slide we will do
+          // Extend grid horizontally to avoid left-gap when sliding right
           const slideMax = SLIDE_PX_PER_SEC * INTRO_SECS;
-          const extraCols = Math.ceil(slideMax / this.cellW) + 2; // pad left & right
-
-          // Grid width extended to avoid gaps while sliding right
+          const extraCols = Math.ceil(slideMax / this.cellW) + 2;
           this.cols = Math.max(1, Math.floor((innerWidth + extraCols*this.cellW*2) / this.cellW));
           this.rows = Math.max(1, ROWS);
           this.N    = Math.min(this.cols*this.rows, 16000);
-
-          // Shift so that we have padding to the left equal to slideMax
           this.gridOffsetX = -extraCols*this.cellW;
 
-          // Row/col mapping (row-major)
+          // Row-major mapping
           this.rcR = new Int16Array(this.N);
           this.rcC = new Int16Array(this.N);
           let k=0;
@@ -180,22 +161,22 @@
             }
           }
 
-          // Static base Y positions (no vertical drift)
+          // Row baseline (static vertically)
           this.y0 = this.cy - (this.rows*this.cellH)/2;
 
-          // Spiral precompute limits
+          // Spiral precompute
           const maxR = Math.hypot(Math.max(this.cx, innerWidth-this.cx),
                                   Math.max(this.cy, innerHeight-this.cy)) + 60;
           this.maxTheta = maxR / B_SPIRAL;
           this.theta = new Float32Array(this.N);
           for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
-          // Scale orbits so Jupiter is ~45% of min dimension
+          // Orbits scaled so Mars ≈ 45% of min dimension
           const minDim = Math.min(innerWidth, innerHeight);
-          const kpx = (0.45 * minDim) / 5.2026; // Jupiter a
+          const kpx = (0.45 * minDim) / 1.5237; // Mars a
           this.orbitR = PLANETS.map(p => p.a * kpx);
 
-          // Planet phases/rates
+          // Planet phases & rates
           const daysNow = Date.now()/86400000;
           this.ang0  = PLANETS.map(p => 2*Math.PI*((daysNow % p.P)/p.P));
           this.omega = PLANETS.map(p => 2*Math.PI*(DAYS_PER_SEC/p.P));
@@ -211,26 +192,18 @@
 
       tick(now){
         const dt = Math.min(1/20, Math.max(0,(now - this.last)/1000)); this.last = now;
-        const x = this.x, w = innerWidth, h = innerHeight;
-        x.clearRect(0,0,w,h);
-        x.textAlign="center"; x.textBaseline="middle"; x.fillStyle="#d7e0ee";
-        x.font = `${this.fontPx}px "Courier New", monospace`;
+        const ctx = this.ctx, w = innerWidth, h = innerHeight;
+        ctx.clearRect(0,0,w,h);
+        ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillStyle="#d7e0ee";
+        ctx.font = `${this.fontPx}px "Courier New", monospace`;
 
-        // Phases: intro slide → spiral morph → orbit reveal
-        const tIntroMs = INTRO_SECS*1000;
-        const tSpiralStart = this.t0 + tIntroMs;
-        const tSpiralEnd   = tSpiralStart + SPIRAL_MS;
-        const tFadeEnd     = tSpiralEnd + ORBIT_FADE_MS;
+        // Phases
+        const introMs   = INTRO_SECS*1000;
+        const tIntro    = clamp01((now - this.t0)/introMs);
+        const tSpiral   = clamp01((now - (this.t0 + introMs))/SPIRAL_MS);
+        const spiralMix = easeCubic(tSpiral);  // 0..1 during spiral
 
-        const introT   = clamp01((now - this.t0)/tIntroMs);
-        const spiralT  = clamp01((now - tSpiralStart)/SPIRAL_MS);
-        const fadeT    = clamp01((now - tSpiralEnd)/ORBIT_FADE_MS);
-
-        const introSlide = SLIDE_PX_PER_SEC * (introT * INTRO_SECS);        // px
-        const spiralMorph = easeCubic(spiralT);                              // 0→1
-        const fadeMorph   = easeCubic(fadeT);                                // 0→1
-
-        // Planet positions
+        // Positions for planets (always moving)
         const tSec = (now - this.t0)/1000;
         const px=[], py=[];
         for (let k=0;k<this.orbitR.length;k++){
@@ -239,63 +212,86 @@
           py[k] = this.cy + this.orbitR[k]*Math.sin(a);
         }
 
-        // Draw letters
+        // Intro slide distance (eases to 0 during spiral)
+        const slideIntro = SLIDE_PX_PER_SEC * (tIntro * INTRO_SECS); // px at end of intro
+        const slideNow = slideIntro * (1 - spiralMix);
+
+        // Character cycling (slow)
         const len = LINE.length;
         const charOffset = Math.floor(now/5000) % len;
 
         for (let i=0;i<this.N;i++){
-          // Base grid position (strictly horizontal slide, fixed rows)
           const r = this.rcR[i], c = this.rcC[i];
-          const baseX = (c + 0.5) * this.cellW + this.gridOffsetX + introSlide*(1-spiralMorph);
+
+          // Base static grid positions
+          const baseX_final = (c + 0.5) * this.cellW + this.gridOffsetX;     // zero-slide grid (used in orbit mode)
+          const baseX_morph = baseX_final + slideNow;                         // during spiral: base X still includes diminishing slide
           const baseY = (r + 0.5) * this.cellH + this.y0;
 
-          // Spiral position (animated by θ)
+          // Spiral coordinates (animated θ)
           let th = this.theta[i];
           if (th > this.maxTheta){ th -= this.maxTheta; this.theta[i]=th; }
           const rad = B_SPIRAL * th;
           const sx  = this.cx + rad*Math.cos(th);
           const sy  = this.cy + rad*Math.sin(th);
 
-          // Position blend across spiral phase
-          const xPos = baseX*(1-spiralMorph) + sx*spiralMorph;
-          const yPos = baseY*(1-spiralMorph) + sy*spiralMorph;
+          // During spiral: blend grid → spiral; After spiral: snap back to static grid for orbit mode
+          let xPos, yPos;
+          if (spiralMix < 1){
+            xPos = baseX_morph*(1-spiralMix) + sx*spiralMix;
+            yPos = baseY*(1-spiralMix) + sy*spiralMix;
+          } else {
+            xPos = baseX_final;
+            yPos = baseY;
+          }
 
-          // Reveal mode: after fade completes, show only inside planet discs
-          let visible = true;
-          if (fadeMorph > 0){ // being revealed / revealed
-            visible = false;
-            // Check disc inclusion; mix visibility as we fade
+          // --- Drawing ---
+          // 1) General text: visible before spiral; fades 1→0 exactly across the spiral duration.
+          if (spiralMix < 1){
+            const alpha = 1 - spiralMix;
+            if (alpha > 0.02){
+              ctx.globalAlpha = alpha;
+              const ch = LINE.charAt((i + charOffset) % len) || "•";
+              ctx.fillText(ch, xPos, yPos);
+            }
+          }
+
+          // 2) Planet-disc text: cross-fades in across the same spiral window.
+          //    Always drawn at FINAL STATIC GRID positions (x = baseX_final, y = baseY).
+          const alphaDisc = spiralMix; // 0→1 over spiral
+          if (alphaDisc > 0.02){
+            // reveal only if inside any planet disc
+            let visible = false;
             for (let k=0;k<this.orbitR.length;k++){
-              const dx = xPos - px[k], dy = yPos - py[k];
+              const dx = baseX_final - px[k], dy = baseY - py[k];
               if (dx*dx + dy*dy <= PLANETS[k].disc*PLANETS[k].disc) { visible = true; break; }
             }
-            // During fade window, lerp visibility (simple alpha gate)
-            if (!visible && fadeMorph < 1) { /* keep hidden during fade */ }
+            if (visible){
+              ctx.globalAlpha = alphaDisc;
+              const ch = LINE.charAt((i + charOffset) % len) || "•";
+              ctx.fillText(ch, baseX_final, baseY);
+            }
           }
 
-          if (visible) {
-            const ch = LINE.charAt((i + charOffset) % len) || "•";
-            x.fillText(ch, xPos, yPos);
-          }
-
-          // θ drift only during spiral phase (so spiral feels alive)
-          if (spiralMorph < 1) this.theta[i] = th + SPEED_RAD_S*dt;
+          // θ drift only while spiraling (gives life to the morph)
+          if (spiralMix < 1) this.theta[i] = th + SPEED_RAD_S*dt;
         }
+        ctx.globalAlpha = 1;
 
-        // Draw planets (solid dots)
-        x.save();
+        // Planets (solid dots)
+        ctx.save();
         for (let k=0;k<this.orbitR.length;k++){
-          x.fillStyle = PLANETS[k].color;
-          x.beginPath(); x.arc(px[k], py[k], PLANETS[k].dot, 0, Math.PI*2); x.fill();
+          ctx.fillStyle = PLANETS[k].color;
+          ctx.beginPath(); ctx.arc(px[k], py[k], PLANETS[k].dot, 0, Math.PI*2); ctx.fill();
         }
-        x.restore();
+        ctx.restore();
 
-        // HUD
+        // HUD (dev)
         const hud = document.getElementById('hud');
         if (hud) hud.textContent =
-          `inline-orbits-r22 | intro=${introT.toFixed(2)} spiral=${spiralMorph.toFixed(2)} fade=${fadeMorph.toFixed(2)} | cols=${this.cols}`;
+          `inline-orbits-r23 | intro=${tIntro.toFixed(2)} spiral=${spiralMix.toFixed(2)} | MarsR=${Math.round(this.orbitR[3])}px`;
 
-        requestAnimationFrame(this.tick);
+        requestAnimationFrame(this.tick.bind(this));
       }
     }
 
