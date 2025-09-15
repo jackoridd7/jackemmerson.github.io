@@ -382,8 +382,8 @@
           const px=this.cx + r*Math.cos(a);
           const py=this.cy + r*Math.sin(a);
           const w=this.omega[k];             // rad/s
-          const vx = -Math.sin(a)*r*w*0.1;   // HALF the analytic speed
-          const vy =  Math.cos(a)*r*w*0.1;   // HALF the analytic speed
+          const vx = -Math.sin(a)*r*w*0.5;   // HALF the analytic speed
+          const vy =  Math.cos(a)*r*w*0.5;   // HALF the analytic speed
           pos.push({x:px-this.cx, y:py-this.cy});   // center-relative
           vel.push({x:vx, y:vy});
           mass.push(PLANETS[k].m);
@@ -422,7 +422,7 @@
           }
         } else {
           // n-body: stronger gravity
-          const G=90000, EPS=30, MAX_ACC=400;
+          const G=900000, EPS=30, MAX_ACC=4000;
           const {pos,vel,mass}=this.nb; const N=pos.length;
           const ax=new Array(N).fill(0), ay=new Array(N).fill(0);
           for(let i=0;i<N;i++){
