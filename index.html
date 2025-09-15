@@ -24,7 +24,6 @@
       --ink:#e2e8f0;
       --muted:#94a3b8;
       --em:#6ee7b7;
-      --card:#0b1222;
       --ring: rgba(255,255,255,.08);
     }
     *{box-sizing:border-box}
@@ -37,10 +36,8 @@
     }
 
     /* ===== LAYERS ===== */
-    /* Canvas effect under everything */
     vortex-show{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
 
-    /* Top navigation */
     .nav{position:fixed; inset-inline:0; top:0; z-index:10;}
     .nav .row{max-width:1100px; margin:0 auto; padding:18px 24px; display:flex; align-items:center; justify-content:space-between;}
     .nav a{color:#cbd5e1; text-decoration:none; margin-left:24px}
@@ -68,24 +65,44 @@
     .pill.ghost:hover{background:rgba(255,255,255,.16)}
     .scroll-cue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; letter-spacing:.2em}
 
+    /* n-body toggle button */
+    .nb{
+      position:fixed; right:18px; bottom:18px; z-index:12;
+      background:rgba(2,6,23,.7); color:#e5e7eb; border:1px solid rgba(255,255,255,.15);
+      padding:10px 14px; border-radius:12px; cursor:pointer;
+      display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+      backdrop-filter:saturate(180%) blur(6px);
+    }
+    .nb strong{font-size:13px; letter-spacing:.02em}
+    .nb span{font-size:11px; color:#94a3b8}
+
     /* CONTENT PANEL (covers the canvas on scroll) */
     .content{
       position:relative; z-index:8;
-      background:linear-gradient(to bottom, var(--bg) 0%, var(--bg2) 100%);
+      /* image + dark overlay for readability */
+      background:
+        linear-gradient(to bottom, rgba(15,23,42,.92) 0%, rgba(11,19,36,.95) 100%),
+        url('assets/portfolio/ESAM31Capture.jpg') center/cover no-repeat fixed;
       border-top:1px solid var(--ring);
       box-shadow:0 -24px 64px rgba(0,0,0,.45) inset;
       isolation:isolate;
     }
     .content .wrap{max-width:1100px; margin:0 auto; padding:56px 24px 96px}
     .section-title{font-size:28px; letter-spacing:.02em; margin:0 0 6px}
-    .section-sub{color:var(--muted); margin:0 0 32px}
+    .section-sub{color:#c6d0df; margin:0 0 32px}
 
-    /* Portfolio grid (NO ROUNDED CORNERS) */
+    /* bottom-right credit on the portfolio panel */
+    .credit{
+      position:absolute; right:16px; bottom:12px;
+      color:#9fb0c8; font-size:12px; opacity:.85; user-select:none;
+    }
+
+    /* Portfolio grid (square corners) */
     .ach{
       display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
       background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
       border:1px solid var(--ring);
-      border-radius:0;      /* square corners */
+      border-radius:0;
       padding:22px; margin:22px 0;
     }
     .ach:nth-child(even){grid-template-columns:1fr 1.2fr}
@@ -93,13 +110,13 @@
       aspect-ratio:4/3;
       background:radial-gradient(ellipse at 30% 20%, #0f1b34 0, #0a1222 60%);
       border:1px solid var(--ring);
-      border-radius:0;      /* square corners */
+      border-radius:0;
       overflow:hidden
     }
     .ach__media img{width:100%; height:100%; object-fit:cover; display:block}
     .ach__title{font-weight:700; font-size:22px; margin:0 0 4px}
-    .ach__sub{color:var(--muted); margin:0 0 12px}
-    .ach__body{color:#cdd6e3; font-size:15px; margin:0}
+    .ach__sub{color:#cfd8e6; margin:0 0 12px}
+    .ach__body{color:#e6edf6; font-size:15px; margin:0}
 
     /* Reveal on scroll */
     .reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease}
@@ -112,8 +129,14 @@
   </style>
 </head>
 <body>
-  <!-- Background effect (orbit/spiral text) -->
+  <!-- Background orbit/spiral effect -->
   <vortex-show></vortex-show>
+
+  <!-- Toggle analytic ↔ n-body -->
+  <button id="nb-btn" class="nb" type="button">
+    <strong>Remove Sun</strong>
+    <span>n-body chaos</span>
+  </button>
 
   <!-- NAV -->
   <header class="nav">
@@ -227,10 +250,13 @@
         </div>
       </article>
     </div>
+
+    <!-- ESA credit -->
+    <div class="credit">Image © ESA</div>
   </div>
 
   <footer>© 2025 Jack Emmerson</footer>
-  <div id="hud" class="hud">inline-orbits-r23 | ready</div>
+  <div id="hud" class="hud">inline-orbits-r24 | ready</div>
 
   <!-- Reveal on scroll -->
   <script>
@@ -244,14 +270,14 @@
     })();
   </script>
 
-  <!-- ====== Orbit/spiral effect (Mercury→Mars; Mars outermost) ====== -->
+  <!-- ====== Orbit/spiral effect with n-body toggle (Mercury→Mars; Mars outermost) ====== -->
   <script>
   (function(){
     const PLANETS = [
-      {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:4, disc:30},
-      {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:6, disc:38},
-      {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:7, disc:44},
-      {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:7, disc:50}
+      {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:4, disc:30, m:0.055},
+      {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:6, disc:38, m:0.815},
+      {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:7, disc:44, m:1.000},
+      {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:7, disc:50, m:0.107}
     ];
     const INTRO_SECS=1.5, SLIDE_PX_PER_SEC=28, SPIRAL_MS=1200, B_SPIRAL=4.2, SPEED_RAD_S=0.012;
     const CELL_W=12, CELL_H=36, ROWS=40, CENTER_X=.5, CENTER_Y=.58, DAYS_PER_SEC=30;
@@ -264,6 +290,7 @@
       connectedCallback(){
         this.c=document.createElement('canvas'); this.x=this.c.getContext('2d',{alpha:true});
         this.appendChild(this.c);
+        this.nbMode=false; this.nb={}; // n-body state container
 
         const resize=()=>{
           const dpr=Math.max(1,devicePixelRatio||1);
@@ -304,7 +331,44 @@
 
         this.t0=performance.now(); this.last=this.t0;
         requestAnimationFrame(this.tick.bind(this));
+
+        // expose a toggle for the external button
+        this.toggleNBody = () => {
+          if (!this.nbMode) this.initNBody();
+          else this.resetAnalytic();
+        };
       }
+
+      // Build n-body initial state from current analytic positions/velocities
+      initNBody(){
+        const now=performance.now();
+        const tSec=(now-this.t0)/1000;
+        const pos=[], vel=[], mass=[];
+        for(let k=0;k<this.orbitR.length;k++){
+          const r=this.orbitR[k];
+          const a=this.ang0[k]+this.omega[k]*tSec;
+          const px=this.cx + r*Math.cos(a);
+          const py=this.cy + r*Math.sin(a);
+          // velocity perpendicular to radius (px/s)
+          const w=this.omega[k]; // rad/s
+          const vx = -Math.sin(a)*r*w;
+          const vy =  Math.cos(a)*r*w;
+          pos.push({x:px-this.cx, y:py-this.cy}); // center-relative
+          vel.push({x:vx, y:vy});
+          mass.push(PLANETS[k].m);
+        }
+        this.nb={pos,vel,mass};
+        this.nbMode=true;
+        const btn=document.getElementById('nb-btn');
+        if(btn){ btn.querySelector('strong').textContent='Reset Orbits'; btn.querySelector('span').textContent='back to analytic'; }
+      }
+
+      resetAnalytic(){
+        this.nbMode=false;
+        const btn=document.getElementById('nb-btn');
+        if(btn){ btn.querySelector('strong').textContent='Remove Sun'; btn.querySelector('span').textContent='n-body chaos'; }
+      }
+
       tick(now){
         const dt=Math.min(1/20,Math.max(0,(now-this.last)/1000)); this.last=now;
         const x=this.x, w=innerWidth, h=innerHeight;
@@ -317,16 +381,49 @@
         const tSpiral=clamp01((now-(this.t0+introMs))/SPIRAL_MS);
         const sMix=easeCubic(tSpiral);
 
-        const tSec=(now-this.t0)/1000, px=[], py=[];
-        for(let k=0;k<this.orbitR.length;k++){
-          const a=this.ang0[k]+this.omega[k]*tSec;
-          px[k]=this.cx+this.orbitR[k]*Math.cos(a);
-          py[k]=this.cy+this.orbitR[k]*Math.sin(a);
+        const px=[], py=[];
+        if (!this.nbMode){
+          // Analytic (circular) orbits
+          const tSec=(now-this.t0)/1000;
+          for(let k=0;k<this.orbitR.length;k++){
+            const a=this.ang0[k]+this.omega[k]*tSec;
+            px[k]=this.cx+this.orbitR[k]*Math.cos(a);
+            py[k]=this.cy+this.orbitR[k]*Math.sin(a);
+          }
+        } else {
+          // n-body: integrate in pixel space, center as origin
+          const G=25000;             // tuned for on-screen dynamics (px units)
+          const EPS=40;              // softening (px)
+          const MAX_ACC=200;         // clamp for stability
+          const {pos,vel,mass}=this.nb;
+          const N=pos.length;
+          // accelerations
+          const ax=new Array(N).fill(0), ay=new Array(N).fill(0);
+          for(let i=0;i<N;i++){
+            for(let j=i+1;j<N;j++){
+              let dx=pos[j].x-pos[i].x, dy=pos[j].y-pos[i].y;
+              const r2=dx*dx+dy*dy+EPS*EPS, inv=1/Math.sqrt(r2*r2*r2);
+              const f=G*inv;
+              const fax=f*mass[j], fbx=f*mass[i];
+              ax[i]+=fax*dx; ay[i]+=fax*dy;
+              ax[j]-=fbx*dx; ay[j]-=fbx*dy;
+            }
+          }
+          // clamp, integrate
+          for(let i=0;i<N;i++){
+            const aMag=Math.hypot(ax[i],ay[i]);
+            const clamp=aMag>MAX_ACC?MAX_ACC/aMag:1;
+            vel[i].x += ax[i]*clamp*dt;
+            vel[i].y += ay[i]*clamp*dt;
+            pos[i].x += vel[i].x*dt;
+            pos[i].y += vel[i].y*dt;
+            px[i]=this.cx+pos[i].x; py[i]=this.cy+pos[i].y;
+          }
         }
 
+        // Intro text morph & planet-disc reveal (same as before)
         const slideIntro=SLIDE_PX_PER_SEC*(tIntro*INTRO_SECS);
         const slideNow=slideIntro*(1-sMix);
-
         const len=LINE.length, charOffset=Math.floor(now/5000)%len;
 
         for(let i=0;i<this.N;i++){
@@ -342,39 +439,44 @@
           if(sMix<1){ xPos=baseX_morph*(1-sMix)+sx*sMix; yPos=baseY*(1-sMix)+sy*sMix; }
           else{ xPos=baseX_final; yPos=baseY; }
 
-          // General text fades out 1→0 over spiral
+          // 1) general sliding text fades out
           if(sMix<1){
             const a=1-sMix; if(a>0.02){ x.globalAlpha=a; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,xPos,yPos); }
           }
-
-          // Planet-disc text fades in 0→1 over spiral, at final grid
+          // 2) planet-disc reveal fades in
           const ad=sMix;
           if(ad>0.02){
             let vis=false;
-            for(let k=0;k<this.orbitR.length;k++){
+            for(let k=0;k<PLANETS.length;k++){
               const dx=baseX_final-px[k], dy=baseY-py[k];
               if(dx*dx+dy*dy<=PLANETS[k].disc*PLANETS[k].disc){ vis=true; break; }
             }
             if(vis){ x.globalAlpha=ad; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,baseX_final,baseY); }
           }
-
           if(sMix<1) this.theta[i]=th+SPEED_RAD_S*dt;
         }
         x.globalAlpha=1;
 
-        // Planets (solid)
-        for(let k=0;k<this.orbitR.length;k++){
+        // Planets
+        for(let k=0;k<PLANETS.length;k++){
           x.fillStyle=PLANETS[k].color;
           x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
         }
 
         const hud=document.getElementById('hud');
-        if(hud) hud.textContent=`inline-orbits-r23 | intro=${tIntro.toFixed(2)} spiral=${sMix.toFixed(2)}`;
+        if(hud) hud.textContent=`inline-orbits-r24 | mode=${this.nbMode?'n-body':'analytic'}`;
 
         requestAnimationFrame(this.tick.bind(this));
       }
     }
-    const TAG='vortex-show'; if(!customElements.get(TAG)) customElements.define(TAG,VortexShow);
+    const el=document.querySelector('vortex-show');
+    if(!customElements.get('vortex-show')) customElements.define('vortex-show', VortexShow);
+    // Attach button listener after element is defined/connected
+    window.addEventListener('DOMContentLoaded',()=>{
+      const btn=document.getElementById('nb-btn');
+      const inst=document.querySelector('vortex-show');
+      btn?.addEventListener('click',()=>inst?.toggleNBody && inst.toggleNBody());
+    });
   })();
   </script>
 </body>
