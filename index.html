@@ -36,7 +36,7 @@
       line-height:1.4;
     }
 
-    /* ==== LAYERS ==== */
+    /* ===== LAYERS ===== */
     /* Canvas effect under everything */
     vortex-show{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
 
@@ -85,7 +85,7 @@
       display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:center;
       background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
       border:1px solid var(--ring);
-      border-radius:0;      /* <- square corners */
+      border-radius:0;      /* square corners */
       padding:22px; margin:22px 0;
     }
     .ach:nth-child(even){grid-template-columns:1fr 1.2fr}
@@ -93,7 +93,7 @@
       aspect-ratio:4/3;
       background:radial-gradient(ellipse at 30% 20%, #0f1b34 0, #0a1222 60%);
       border:1px solid var(--ring);
-      border-radius:0;      /* <- square corners */
+      border-radius:0;      /* square corners */
       overflow:hidden
     }
     .ach__media img{width:100%; height:100%; object-fit:cover; display:block}
@@ -112,7 +112,7 @@
   </style>
 </head>
 <body>
-  <!-- Background effect -->
+  <!-- Background effect (orbit/spiral text) -->
   <vortex-show></vortex-show>
 
   <!-- NAV -->
@@ -147,61 +147,83 @@
       <h2 class="section-title">Portfolio</h2>
       <p class="section-sub">A selection of projects and experiments.</p>
 
-      <!-- Cards (replace images/words as you wish) -->
+      <!-- 1) IAC logo.png -->
       <article class="ach reveal">
         <div class="ach__body">
-          <h3 class="ach__title">Micro UAV Capstone</h3>
-          <p class="ach__sub">Deployable from a sounding rocket</p>
+          <h3 class="ach__title">Presenter</h3>
+          <p class="ach__sub">MAPS Mars Human Precursor Program</p>
           <p class="ach__body">
-            Designed and tested a 2U form-factor UAV for rapid deployment. Flight dynamics modeled in JSBSim; onboard mission logic in C++.
+            Conference presentation exploring human-precursor mission concepts and technology pathways for sustained Mars exploration.
           </p>
         </div>
         <div class="ach__media">
-          <!-- Replace with your file, e.g. assets/portfolio/uav.jpg -->
-          <img alt="" loading="lazy" decoding="async"
-               src="https://images.unsplash.com/photo-1518281420975-50db6e5d0a97?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="IAC conference logo"
+               loading="lazy" decoding="async"
+               src="assets/portfolio/IAC%20logo.png" />
         </div>
       </article>
 
+      <!-- 2) AURC.jpg -->
       <article class="ach reveal">
         <div class="ach__media">
-          <img alt="" loading="lazy" decoding="async"
-               src="https://images.unsplash.com/photo-1517976487492-5768de1f3c52?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="RMIT HIVE AURC payload team imagery"
+               loading="lazy" decoding="async"
+               src="assets/portfolio/AURC.jpg" />
         </div>
         <div class="ach__body">
-          <h3 class="ach__title">CFD Toolkit</h3>
-          <p class="ach__sub">Open-source solvers & visualizers</p>
+          <h3 class="ach__title">Payload Team Lead</h3>
+          <p class="ach__sub">RMIT HIVE AURC</p>
           <p class="ach__body">
-            WebGL prototypes for inviscid flows and shock visualization; exported to WASM for speed.
+            Led payload development for AURC: architecture, avionics, and integration—delivering robust flight hardware on a tight schedule.
           </p>
         </div>
       </article>
 
+      <!-- 3) ASCLEPIOSRecruitment.png -->
       <article class="ach reveal">
         <div class="ach__body">
-          <h3 class="ach__title">Orbital Mechanics Playground</h3>
-          <p class="ach__sub">Intuitive Δv + transfer explorer</p>
+          <h3 class="ach__title">Asclepios Analogue Astronaut</h3>
+          <p class="ach__sub">EPFL Asclepios Analogue astronaut mission VI</p>
           <p class="ach__body">
-            Interactive tool for Hohmann/bi-elliptic transfers and plane changes. Numerics validated against poliastro.
+            Selected for a high-fidelity analogue mission focusing on human factors, EVA protocols, and operations in constrained habitats.
           </p>
         </div>
         <div class="ach__media">
-          <img alt="" loading="lazy" decoding="async"
-               src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="EPFL Asclepios recruitment poster"
+               loading="lazy" decoding="async"
+               src="assets/portfolio/ASCLEPIOSRecruitment.png" />
         </div>
       </article>
 
+      <!-- 4) Fleet Chart.jpg -->
       <article class="ach reveal">
         <div class="ach__media">
-          <img alt="" loading="lazy" decoding="async"
-               src="https://images.unsplash.com/photo-1605649487212-47bdab064df3?q=80&w=1200&auto=format&fit=crop" />
+          <img alt="Fleet architecture chart for NASA RASC-AL"
+               loading="lazy" decoding="async"
+               src="assets/portfolio/Fleet%20Chart.jpg" />
         </div>
         <div class="ach__body">
-          <h3 class="ach__title">p5.js “Asteroids” Clone</h3>
-          <p class="ach__sub">Physics-first, tiny footprint</p>
+          <h3 class="ach__title">2025 NASA RASC-AL Co-Lead</h3>
+          <p class="ach__sub">RMIT × MIT = R(MIT)² NASA RASC-AL Competition Team</p>
           <p class="ach__body">
-            A few hundred lines, deterministic collisions, and crisp feel tuned by frame-level telemetry.
+            Co-leading a bi-institutional team on lunar surface logistics and Mars-forward systems; concept trades, mass budgets, and ops sims.
           </p>
+        </div>
+      </article>
+
+      <!-- 5) 2024RASCAL.png -->
+      <article class="ach reveal">
+        <div class="ach__body">
+          <h3 class="ach__title">2024 NASA RASC-AL Team Lead</h3>
+          <p class="ach__sub">RMIT, Khalifa University, Clarkson University</p>
+          <p class="ach__body">
+            Managed cross-university collaboration—requirements, verification plans, and design reviews—culminating in a cohesive mission concept.
+          </p>
+        </div>
+        <div class="ach__media">
+          <img alt="RASC-AL 2024 team artwork"
+               loading="lazy" decoding="async"
+               src="assets/portfolio/2024RASCAL.png" />
         </div>
       </article>
     </div>
@@ -214,7 +236,7 @@
   <script>
     (function(){
       const items=[...document.querySelectorAll('.reveal')];
-      if(!('IntersectionObserver'in window)){ items.forEach(el=>el.classList.add('in')); return; }
+      if(!('IntersectionObserver' in window)){ items.forEach(el=>el.classList.add('in')); return; }
       const io=new IntersectionObserver((entries)=>{
         entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
       },{threshold:.15});
@@ -222,10 +244,9 @@
     })();
   </script>
 
-  <!-- ====== Orbit/spiral effect (Mars outermost, with cross-fade) ====== -->
+  <!-- ====== Orbit/spiral effect (Mercury→Mars; Mars outermost) ====== -->
   <script>
   (function(){
-    /* Planets (Mercury..Mars; Mars outermost; larger discs/dots) */
     const PLANETS = [
       {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", dot:4, disc:30},
       {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", dot:6, disc:38},
@@ -272,7 +293,7 @@
           for(let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
           const minDim=Math.min(innerWidth,innerHeight);
-          const kpx=(0.45*minDim)/1.5237; // Mars outermost scale
+          const kpx=(0.45*minDim)/1.5237; // Mars outermost
           this.orbitR=PLANETS.map(p=>p.a*kpx);
 
           const daysNow=Date.now()/86400000;
@@ -337,12 +358,12 @@
             if(vis){ x.globalAlpha=ad; const ch=LINE.charAt((i+charOffset)%len)||"•"; x.fillText(ch,baseX_final,baseY); }
           }
 
-          if(sMix<1) this.theta[i]=th+0.012*dt;
+          if(sMix<1) this.theta[i]=th+SPEED_RAD_S*dt;
         }
         x.globalAlpha=1;
 
         // Planets (solid)
-        for(let k=0;k	this.orbitR.length;k++){
+        for(let k=0;k<this.orbitR.length;k++){
           x.fillStyle=PLANETS[k].color;
           x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
         }
