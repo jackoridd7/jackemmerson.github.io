@@ -190,7 +190,7 @@
         <div class="ach__media"><img alt="EPFL Asclepios recruitment poster" loading="lazy" decoding="async" src="assets/portfolio/ASCLEPIOSRecruitment.png" /></div>
       </article>
 
-      <!-- 2025 Co-Lead (above Student Pilot & 2024) -->
+      <!-- 2025 Co-Lead -->
       <article class="ach reveal">
         <div class="ach__media"><img alt="Fleet architecture chart for NASA RASC-AL" loading="lazy" decoding="async" src="assets/portfolio/Fleet%20Chart.jpg" /></div>
         <div class="ach__body">
@@ -200,11 +200,11 @@
         </div>
       </article>
 
-      <!-- Student Pilot (between 2025 and 2024) -->
+      <!-- Student Pilot (above Engineering Intern) -->
       <article class="ach reveal">
         <div class="ach__body">
           <h3 class="ach__title">Student Pilot</h3>
-          <p class="ach__sub">Topaz Rotax 912 Engine, Civillian</p>
+          <p class="ach__sub">Topaz Rotax 912 Engine, Civilian</p>
           <p class="ach__body">Building hours and refining airmanship; focused on energy management, crosswind ops, and nav planning.</p>
         </div>
         <div class="ach__media"><img alt="Light sport aircraft flight" loading="lazy" decoding="async" src="assets/portfolio/flight.jpg" /></div>
@@ -253,7 +253,7 @@
   <!-- Orbits + n-body -->
   <script>
   (function(){
-    const VERSION='inline-orbits-r29';
+    const VERSION='inline-orbits-r30';
     const PLANETS=[
       {name:"Mercury", a:0.3871, P:87.969,  color:"#cbd5e1", dot:4, disc:30, m:0.055},
       {name:"Venus",   a:0.7233, P:224.701, color:"#fbbf24", dot:6, disc:38, m:0.815},
@@ -264,8 +264,11 @@
 
     const INTRO_SECS=1.5, SLIDE_PX_PER_SEC=28, SPIRAL_MS=1200, B_SPIRAL=4.2, SPEED_RAD_S=0.012;
     const CELL_W=12, CELL_H=36, ROWS=40, CENTER_X=.5, CENTER_Y=.58, DAYS_PER_SEC=30;
-    const WORDS=["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
+
+    /* Updated word list: removed SCRAMJET; added SPACEFLIGHT, NASA, ESA, ARTEMIS, LUNA */
+    const WORDS=["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","UAV","SPACEFLIGHT","NASA","ESA","ARTEMIS","LUNA"];
     const LINE=(WORDS.join("•")+"•").replace(/ /g,"");
+
     const clamp01=x=>Math.max(0,Math.min(1,x)), easeCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 
     class VortexShow extends HTMLElement{
@@ -327,7 +330,7 @@
         if(b){ b.querySelector('strong').textContent='Show Planets'; b.querySelector('span').textContent='restore dots'; }
       }
 
-      // n-body start: Sun at center; planets at analytic positions WITH CURRENT velocities (no halving)
+      // n-body start: Sun at center; planets at analytic positions with their current velocities (no halving)
       initNBody(){
         const now=performance.now(), tSec=(now-this.t0)/1000;
         const pos=[], vel=[], mass=[];
@@ -398,7 +401,7 @@
           speeds=this.nb.vel.slice(1).map(v=>Math.hypot(v.x,v.y));
         }
 
-        // Text morph & reveal
+        // Text morph & reveal (Sun not used for text reveal)
         const slideIntro=SLIDE_PX_PER_SEC*(tIntro*INTRO_SECS), slideNow=slideIntro*(1-sMix);
         const len=LINE.length, charOffset=Math.floor(now/5000)%len;
 
@@ -429,14 +432,12 @@
         }
         x.globalAlpha=1;
 
-        // Dots (planets + Sun). Sun should be visible even in analytic mode when dots are on.
+        // Dots (planets + Sun). Sun visible in both modes when dots are on.
         if(this.showDots){
-          // Planets
           for(let k=0;k<PLANETS.length;k++){
             x.fillStyle=PLANETS[k].color;
             x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
           }
-          // Sun dot
           x.fillStyle=SUN.color; x.beginPath(); x.arc(sunPX,sunPY,SUN.dot,0,Math.PI*2); x.fill();
         }
 
