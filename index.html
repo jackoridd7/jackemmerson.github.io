@@ -1,381 +1,457 @@
-<script>
-/* visibility hot-fix (prevents any stuck opacity=0) */
-(function () {
-  try {
-    const s = document.createElement('style');
-    s.id = 'hotfix-visible';
-    s.textContent = 'html,body{opacity:1!important;background:#0f172a!important}';
-    document.head.appendChild(s);
-    const force1 = () => {
-      document.documentElement.style.opacity = '1';
-      document.body.style.opacity = '1';
-    };
-    document.addEventListener('DOMContentLoaded', force1, { once: true });
-    addEventListener('click', (e) => {
-      if (e.target && e.target.closest && e.target.closest('a')) force1();
-    }, true);
-  } catch {}
-})();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jack Emmerson – Designing Tomorrow</title>
 
-/* vortex → planets, fluid intro, orbit mask + halos (inline-orbits-r20-fluid) */
-(function(){
-  // Planet data (AU, days)
-  const PLANETS = [
-    {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", r:2},
-    {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", r:3},
-    {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", r:3},
-    {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", r:3},
-    {name:"Jupiter", a:5.2026, P:4332.590, color:"#f59e0b", r:4},
-    {name:"Saturn",  a:9.5549, P:10759.20, color:"#fcd34d", r:4},
-    {name:"Uranus",  a:19.218, P:30688.50, color:"#a78bfa", r:4},
-    {name:"Neptune", a:30.110, P:60182.00, color:"#93c5fd", r:4}
-  ];
-
-  // Easing helpers
-  const easeCubic = t => (t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2);
-  const easeInOut = t => t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
-  const clamp01 = x => Math.max(0, Math.min(1, x));
-  const lerp = (a,b,t) => a + (b-a)*t;
-
-  class VortexPlanetsFluid extends HTMLElement {
-    connectedCallback(){
-      // ===== Tunables (you can tweak) ====================================
-      this.words = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
-
-      // Grid + spiral geometry
-      const CELL_W=12, CELL_H=36;     // grid cell size (monospace char box)
-      const ROWS=40, B=4.2;           // r = B * θ
-      const CENTER_X=0.5, CENTER_Y=0.58;
-
-      // Intro: readable slide before morph (fluid)
-      const INTRO_READ_SECS = 3.0;    // keep text readable here
-      const INTRO_SLIDE_PX_PER_SEC = 24; // gentle horizontal drift of rows
-      const INTRO_SLIDE_AMPL = 42;    // max added offset (px) per row parity
-
-      // Morph timing (rows → spiral)
-      const MORPH_MS = 1100;          // duration of morph after intro
-      const PLANETS_SHOW_AT = 0.98;   // planets/orbits fade-in when morph >= this
-
-      // Angular speed (fluid swirl)
-      const SPEED_INTRO=0.0020;       // rad/s at morph start
-      const SPEED_FINAL=0.0160;       // rad/s when fully spiraled
-
-      // Grid-step cadence & smooth cell travel
-      const STEP_INTRO_MS=580;        // min time between cell hops (start)
-      const STEP_FINAL_MS=320;        // min time between hops (end)
-      const TRAVEL_MS=300;            // duration to glide from one cell to the next
-
-      // Fade: non-orbit text fades to 0 as morph→1
-      const FADE_POWER = 1.5;
-
-      // Orbit/halo rendering
-      const ORBIT_BAND = 8;           // ±px keep band around orbit lines
-      const HALO_R   = 22;            // halo radius around planet (px)
-      const HALO_BW  = 7;             // halo band half-width (px)
-
-      // Solar-system time scale (days simulated per animation second)
-      const DAYS_PER_SEC = 30;
-      // ===================================================================
-
-      const line = (this.words.join("•")+"•").replace(/ /g,"");
-
-      // Canvas
-      const cvs = document.createElement("canvas");
-      const ctx = cvs.getContext("2d", { alpha: true });
-      this.appendChild(cvs);
-
-      // Sizing & precompute
-      const resize = () => {
-        const dpr = Math.max(1, devicePixelRatio||1);
-        cvs.width  = Math.floor(innerWidth*dpr);
-        cvs.height = Math.floor(innerHeight*dpr);
-        cvs.style.width  = innerWidth+"px";
-        cvs.style.height = innerHeight+"px";
-        ctx.setTransform(dpr,0,0,dpr,0,0);
-
-        this.cx = innerWidth*CENTER_X;
-        this.cy = innerHeight*CENTER_Y;
-
-        // Font & cell
-        this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
-        ctx.font = `${this.fontPx}px "Courier New", monospace`;
-        const mw = Math.ceil(ctx.measureText("M").width)+2;
-        this.cellW = Math.max(CELL_W, mw);
-        this.cellH = CELL_H;
-
-        // Grid dims
-        this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
-        this.rows = Math.max(1, ROWS);
-        this.N    = Math.min(this.cols*this.rows, 12000);
-
-        const maxR = Math.hypot(Math.max(this.cx, innerWidth-this.cx),
-                                Math.max(this.cy, innerHeight-this.cy)) + 60;
-        this.maxTheta = maxR / B;
-
-        // θ inner→outer
-        this.theta = new Float32Array(this.N);
-        for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
-
-        // Each glyph state
-        this.rcRow = new Int16Array(this.N);
-        this.rcCol = new Int16Array(this.N);
-        this.curCi = new Int16Array(this.N);
-        this.curRi = new Int16Array(this.N);
-        this.nextAt= new Float64Array(this.N);     // next time we can start a hop
-        this.mvOn  = new Uint8Array(this.N);       // 0/1 moving between cells
-        this.mvT0  = new Float64Array(this.N);     // move start ms
-        this.mvT1  = new Float64Array(this.N);     // move end ms
-        this.mvFromCi = new Int16Array(this.N);
-        this.mvFromRi = new Int16Array(this.N);
-        this.mvToCi   = new Int16Array(this.N);
-        this.mvToRi   = new Int16Array(this.N);
-
-        let k=0, now=performance.now();
-        for (let r=0;r<this.rows && k<this.N;r++){
-          for (let c=0;c<this.cols && k<this.N;c++,k++){
-            this.rcRow[k]=r; this.rcCol[k]=c;
-            this.curCi[k]=c; this.curRi[k]=r;
-            this.mvOn[k]=0;
-            this.nextAt[k]=now;
-          }
-        }
-        this.occ = new Int32Array(this.cols*this.rows);   // occupant id (or -1)
-        this.res = new Int32Array(this.cols*this.rows);   // reserved target (or -1)
-
-        // Orbits scaling: fit Neptune near edge
-        const minDim = Math.min(innerWidth, innerHeight);
-        const maxAU  = 30.11;
-        const kpx    = (0.46 * minDim) / maxAU;
-        this.orbits  = PLANETS.map(p => p.a * kpx);
-
-        // Planet mean anomaly (phase) from current date
-        const daysNow = Date.now()/86400000;
-        this.a0    = PLANETS.map(p => 2*Math.PI * ((daysNow % p.P) / p.P));
-        this.omega = PLANETS.map(p => 2*Math.PI * (DAYS_PER_SEC / p.P));
+  <!-- visibility hot-fix (prevents any stuck opacity=0 from older scripts) -->
+  <style id="hotfix-visible">html,body{opacity:1!important;background:#0f172a!important}</style>
+  <script>
+    (() => {
+      const force = () => {
+        document.documentElement.style.opacity = '1';
+        document.body.style.opacity = '1';
       };
-      addEventListener("resize", resize, {passive:true}); resize();
+      document.addEventListener('DOMContentLoaded', force, {once:true});
+      addEventListener('click', e => { if (e.target?.closest?.('a')) force(); }, true);
+    })();
+  </script>
 
-      this.__version = "inline-orbits-r20-fluid";
-      let t0 = performance.now(), tPrev = t0;
+  <style>
+    :root { --bg1:#0f172a; --bg2:#020617; --ink:#e2e8f0; --muted:#94a3b8; }
+    * { box-sizing: border-box }
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      background: radial-gradient(1200px 800px at 50% 40%, var(--bg1), var(--bg2));
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
+    }
 
-      const tick = (now) => {
-        const dt = Math.min(1/20, Math.max(0,(now - tPrev)/1000)); tPrev = now;
+    /* Layout */
+    .nav{position:fixed; inset-inline:0; top:0; z-index:20;}
+    .nav .row{max-width:1100px; margin:0 auto; padding:20px 24px; display:flex; align-items:center; justify-content:space-between;}
+    .nav a{color:#cbd5e1; text-decoration:none; margin-left:24px}
+    .nav a:hover{color:#6ee7b7}
+    .brand{display:inline-block; width:28px; height:28px; border-radius:10px; background:#10b981; margin-right:10px; vertical-align:middle}
 
-        ctx.clearRect(0,0,innerWidth,innerHeight);
-        ctx.textAlign="center"; ctx.textBaseline="middle";
+    .hero{min-height:100vh; display:grid; place-items:center; padding:96px 24px 24px; position:relative; z-index:10;}
+    .hero .card{text-align:center; max-width:820px; transform:translateY(-10vh)}
+    .h1{
+      font-weight:800; font-size:clamp(44px,8vw,84px); line-height:1.05; margin:0;
+      background:linear-gradient(90deg,#A7F3D0,#CCFBF1,#67E8F9);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      letter-spacing:.5px;
+    }
+    .sub{margin-top:18px; color:var(--muted); font-size:18px}
+    .btns{margin-top:28px; display:flex; gap:14px; justify-content:center}
+    .pill{padding:12px 28px; border-radius:9999px; border:1px solid rgba(255,255,255,.15); backdrop-filter:saturate(180%) blur(6px)}
+    .pill.primary{background:rgba(16,185,129,.18); color:#6ee7b7; border-color:rgba(16,185,129,.30)}
+    .pill.primary:hover{background:rgba(16,185,129,.28)}
+    .pill.ghost{background:rgba(255,255,255,.08); color:#e5e7eb}
+    .pill.ghost:hover{background:rgba(255,255,255,.16)}
 
-        // Timeline
-        const introMs = INTRO_READ_SECS*1000;
-        const tIntro  = clamp01((now - t0) / introMs);
-        const afterIntro = Math.max(0, now - (t0 + introMs));
-        const mRaw = clamp01(afterIntro / MORPH_MS);
-        const morph = easeCubic(mRaw);
+    /* Effect layers */
+    vortex-ultraslow, vortex-ultraslow-r20{position:fixed; inset:0; z-index:0; pointer-events:none; display:block}
+    .scanlines{position:fixed; inset:0; z-index:1; pointer-events:none;
+      background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 1px, transparent 3px);
+    }
 
-        // Swirl speed & step cadence
-        const speedNow = lerp(SPEED_INTRO, SPEED_FINAL, morph);
-        const stepMs   = lerp(STEP_INTRO_MS, STEP_FINAL_MS, morph);
+    footer{position:relative; z-index:10; text-align:center; color:#94a3b8; font-size:14px; padding:24px 0}
 
-        // Planets/orbits fade-in
-        const planetsOn  = morph >= PLANETS_SHOW_AT;
-        const planetsMix = clamp01((morph - PLANETS_SHOW_AT) / 0.05);
+    /* Tiny HUD */
+    .hud{position:fixed; left:8px; top:8px; z-index:50; background:rgba(2,6,23,.65); color:#cbd5e1;
+         padding:6px 10px; border-radius:6px; font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace}
+  </style>
+</head>
+<body>
+  <!-- Background effect (canvas) -->
+  <vortex-ultraslow></vortex-ultraslow>
+  <div class="scanlines"></div>
 
-        // Row slide (fluid, readable)
-        const slidePhase = (now - t0) / 1000;
-        const slideGain  = 1 - morph; // disappears as spiral takes over
+  <!-- NAV -->
+  <header class="nav">
+    <div class="row">
+      <div><span class="brand"></span><strong>Jack Emmerson</strong></div>
+      <div>
+        <a href="index.html">Jack</a>
+        <a href="tools.html">Tools</a>
+        <a href="shop.html">Shop</a>
+      </div>
+    </div>
+  </header>
 
-        // Reset occupancy/reservations
-        this.occ.fill(-1);
-        this.res.fill(-1);
+  <!-- HERO (visible instantly even without JS) -->
+  <main class="hero">
+    <section class="card">
+      <h1 class="h1">Designing&nbsp;Tomorrow</h1>
+      <p class="sub">Aerospace engineering, CFD wizardry &amp; orbital mechanics — built in public.</p>
+      <div class="btns">
+        <a class="pill primary" href="tools.html">Explore Tools</a>
+        <a class="pill ghost" href="mailto:sidwellcourtney@gmail.com">Contact</a>
+      </div>
+    </section>
+  </main>
 
-        // Draw faint orbits when appearing
-        if (planetsOn || planetsMix>0) {
-          ctx.save();
-          ctx.globalAlpha = 0.18 * planetsMix;
-          ctx.strokeStyle = "rgba(148,163,184,1)";
-          ctx.lineWidth = 1;
-          this.orbits.forEach(r=>{
-            ctx.beginPath();
-            ctx.arc(this.cx, this.cy, r, 0, Math.PI*2);
-            ctx.stroke();
-          });
-          ctx.restore();
-        }
+  <footer>© 2025 Jack Emmerson</footer>
+  <div id="hud" class="hud">booting…</div>
 
-        // Character cycling (slow)
-        const charOffset = Math.floor(now / 5000) % line.length;
+  <!-- EFFECT: slow readable intro → spiral → orbits + planet halos (inline-orbits-r20-fluid) -->
+  <script>
+  /* vortex → planets, fluid intro, orbit mask + halos (inline-orbits-r20-fluid) */
+  (function(){
+    // Planet data (AU, days)
+    const PLANETS = [
+      {name:"Mercury", a:0.3871, P:  87.969, color:"#cbd5e1", r:2},
+      {name:"Venus",   a:0.7233, P: 224.701, color:"#fbbf24", r:3},
+      {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", r:3},
+      {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", r:3},
+      {name:"Jupiter", a:5.2026, P:4332.590, color:"#f59e0b", r:4},
+      {name:"Saturn",  a:9.5549, P:10759.20, color:"#fcd34d", r:4},
+      {name:"Uranus",  a:19.218, P:30688.50, color:"#a78bfa", r:4},
+      {name:"Neptune", a:30.110, P:60182.00, color:"#93c5fd", r:4}
+    ];
 
-        // Pre-calc for row baseline
-        const halfRowsH = (ROWS*this.cellH)/2;
+    // Easing helpers
+    const easeCubic = t => (t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2);
+    const easeInOut = t => t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2;
+    const clamp01 = x => Math.max(0, Math.min(1, x));
+    const lerp = (a,b,t) => a + (b-a)*t;
 
-        ctx.font = `${this.fontPx}px "Courier New", monospace`;
-        for (let i=0;i<this.N;i++){
-          // Spiral param
-          let th = this.theta[i];
-          if (th > this.maxTheta){ th -= this.maxTheta; this.theta[i]=th; }
-          const r  = B*th;
-          const sx = this.cx + r*Math.cos(th);
-          const sy = this.cy + r*Math.sin(th);
+    class VortexPlanetsFluid extends HTMLElement {
+      connectedCallback(){
+        // ===== Tunables (can tweak) ======================================
+        this.words = ["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
 
-          // Row baseline position + gentle horizontal slide
-          const rr = this.rcRow[i];
-          const cc = this.rcCol[i];
-          const baseX = (cc + 0.5) * this.cellW;
-          const baseY = (rr + 0.5) * this.cellH + (this.cy - halfRowsH);
-          const drift  = ( (rr&1)? 1 : -1 ) * INTRO_SLIDE_PX_PER_SEC * tIntro;
-          const slide  = ( (rr&1)? 1 : -1 ) * INTRO_SLIDE_AMPL * Math.sin(slidePhase*0.6 + rr*0.15);
-          const rx = baseX + (drift + slide) * slideGain; // fades as morph grows
-          const ry = baseY;
+        // Grid + spiral
+        const CELL_W=12, CELL_H=36;     // monospace char box
+        const ROWS=40, B=4.2;           // r = B * θ
+        const CENTER_X=0.5, CENTER_Y=0.58;
 
-          // Blend positions → target cell index
-          const tx = rx*(1-morph) + sx*morph;
-          const ty = ry*(1-morph) + sy*morph;
-          const ciT = Math.round(tx / this.cellW);
-          const riT = Math.round(ty / this.cellH);
+        // Intro: readable slide before morph (fluid)
+        const INTRO_READ_SECS = 3.0;    // keep text readable here
+        const INTRO_SLIDE_PX_PER_SEC = 24; // gentle horizontal drift of rows
+        const INTRO_SLIDE_AMPL = 42;    // added offset per row parity
 
-          // Current cell & potential hop
-          let ci = this.curCi[i], ri = this.curRi[i];
+        // Morph timing
+        const MORPH_MS = 1100;          // rows → spiral
+        const PLANETS_SHOW_AT = 0.98;   // planets/orbits fade-in when morph ≥ this
 
-          // Launch a move if needed (grid-stepped, fluid interpolation)
-          if (!this.mvOn[i] && (ciT!==ci || riT!==ri) && now >= this.nextAt[i]) {
-            // choose primary axis
-            const dci = ciT - ci, dri = riT - ri;
-            let nci = ci, nri = ri;
-            if (Math.abs(dci) >= Math.abs(dri)) nci += Math.sign(dci)||0;
-            else                                 nri += Math.sign(dri)||0;
-            // clamp & reserve target to avoid collisions
-            nci = Math.max(0, Math.min(this.cols-1, nci));
-            nri = Math.max(0, Math.min(this.rows-1, nri));
-            const key = nri*this.cols + nci;
-            if (this.res[key] === -1) {
-              this.res[key] = i;
-              this.mvOn[i] = 1;
-              this.mvT0[i] = now;
-              this.mvT1[i] = now + TRAVEL_MS;
-              this.mvFromCi[i] = ci; this.mvFromRi[i] = ri;
-              this.mvToCi[i]   = nci; this.mvToRi[i]   = nri;
-              this.nextAt[i]   = now + stepMs;
+        // Angular speed
+        const SPEED_INTRO=0.0020;       // rad/s at morph start
+        const SPEED_FINAL=0.0160;       // rad/s when fully spiraled
+
+        // Grid-step cadence & smooth travel
+        const STEP_INTRO_MS=580;        // hop throttle at start
+        const STEP_FINAL_MS=320;        // hop throttle at end
+        const TRAVEL_MS=300;            // cell glide duration
+
+        // Fade
+        const FADE_POWER = 1.5;
+
+        // Orbit/halo
+        const ORBIT_BAND = 8;           // ±px keep band around orbits
+        const HALO_R   = 22;            // planet halo radius
+        const HALO_BW  = 7;             // halo band half-width
+
+        // Solar-system time scale (days / sec)
+        const DAYS_PER_SEC = 30;
+        // =================================================================
+
+        const line = (this.words.join("•")+"•").replace(/ /g,"");
+
+        // Canvas
+        const cvs = document.createElement("canvas");
+        const ctx = cvs.getContext("2d", { alpha:true });
+        this.appendChild(cvs);
+
+        // Sizing
+        const resize = () => {
+          const dpr = Math.max(1, devicePixelRatio||1);
+          cvs.width  = Math.floor(innerWidth*dpr);
+          cvs.height = Math.floor(innerHeight*dpr);
+          cvs.style.width  = innerWidth+"px";
+          cvs.style.height = innerHeight+"px";
+          ctx.setTransform(dpr,0,0,dpr,0,0);
+
+          this.cx = innerWidth*CENTER_X;
+          this.cy = innerHeight*CENTER_Y;
+
+          // Font & cell
+          this.fontPx = Math.max(10, Math.floor(CELL_H*0.61));
+          ctx.font = `${this.fontPx}px "Courier New", monospace`;
+          const mw = Math.ceil(ctx.measureText("M").width)+2;
+          this.cellW = Math.max(CELL_W, mw);
+          this.cellH = CELL_H;
+
+          // Grid
+          this.cols = Math.max(1, Math.floor(innerWidth / this.cellW));
+          this.rows = Math.max(1, ROWS);
+          this.N    = Math.min(this.cols*this.rows, 12000);
+
+          const maxR = Math.hypot(Math.max(this.cx, innerWidth-this.cx),
+                                  Math.max(this.cy, innerHeight-this.cy)) + 60;
+          this.maxTheta = maxR / B;
+
+          // θ inner→outer
+          this.theta = new Float32Array(this.N);
+          for (let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
+
+          // Glyph state
+          this.rcRow = new Int16Array(this.N);
+          this.rcCol = new Int16Array(this.N);
+          this.curCi = new Int16Array(this.N);
+          this.curRi = new Int16Array(this.N);
+          this.nextAt= new Float64Array(this.N);
+          this.mvOn  = new Uint8Array(this.N);
+          this.mvT0  = new Float64Array(this.N);
+          this.mvT1  = new Float64Array(this.N);
+          this.mvFromCi = new Int16Array(this.N);
+          this.mvFromRi = new Int16Array(this.N);
+          this.mvToCi   = new Int16Array(this.N);
+          this.mvToRi   = new Int16Array(this.N);
+
+          let k=0, now=performance.now();
+          for (let r=0;r<this.rows && k<this.N;r++){
+            for (let c=0;c<this.cols && k<this.N;c++,k++){
+              this.rcRow[k]=r; this.rcCol[k]=c;
+              this.curCi[k]=c; this.curRi[k]=r;
+              this.mvOn[k]=0;
+              this.nextAt[k]=now;
             }
           }
+          this.occ = new Int32Array(this.cols*this.rows).fill(-1);
+          this.res = new Int32Array(this.cols*this.rows).fill(-1);
 
-          // Compute draw position (fluid travel between cell centers)
-          let px, py;
-          if (this.mvOn[i]) {
-            const f = clamp01((now - this.mvT0[i]) / (this.mvT1[i] - this.mvT0[i]));
-            const ff = easeInOut(f);
-            const fx = (this.mvFromCi[i] + 0.5) * this.cellW;
-            const fy = (this.mvFromRi[i] + 0.5) * this.cellH + (this.cy - halfRowsH);
-            const tx2= (this.mvToCi[i]   + 0.5) * this.cellW;
-            const ty2= (this.mvToRi[i]   + 0.5) * this.cellH + (this.cy - halfRowsH);
-            px = lerp(fx, tx2, ff);
-            py = lerp(fy, ty2, ff);
-            if (f >= 1) {
-              // commit move
-              this.mvOn[i]=0;
-              this.curCi[i]=this.mvToCi[i];
-              this.curRi[i]=this.mvToRi[i];
-            }
-          } else {
-            // stationary at current cell center
-            px = (ci + 0.5) * this.cellW;
-            py = (ri + 0.5) * this.cellH + (this.cy - halfRowsH);
-          }
+          // Orbits scale (fit Neptune)
+          const minDim = Math.min(innerWidth, innerHeight);
+          const maxAU  = 30.11;
+          const kpx    = (0.46 * minDim) / maxAU;
+          this.orbits  = PLANETS.map(p => p.a * kpx);
+        };
+        addEventListener("resize", resize, {passive:true}); resize();
 
-          // Single occupancy for the current draw cell
-          const keyDraw = Math.round(py/this.cellH)*this.cols + Math.round(px/this.cellW);
-          if (keyDraw>=0 && keyDraw<this.occ.length) {
-            if (this.occ[keyDraw] !== -1 && this.occ[keyDraw] !== i) {
-              // already occupied by someone else; skip drawing
-              this.theta[i] = th + speedNow*dt;
-              continue;
-            }
-            this.occ[keyDraw] = i;
-          }
-
-          // Alpha: base fade (non-orbit) + keep bands (orbits & halos)
-          let alpha = Math.pow(1 - morph, FADE_POWER);
-          if (planetsOn) {
-            // orbit mask
-            const dist = Math.hypot(px - this.cx, py - this.cy);
-            let orbitMask = 0;
-            for (let k=0;k<this.orbits.length;k++){
-              const d = Math.abs(dist - this.orbits[k]);
-              const a = Math.max(0, 1 - d/ORBIT_BAND);
-              if (a > orbitMask) orbitMask = a;
-            }
-            // halo mask
-            let haloMask = 0;
-            for (let k=0;k<this.orbits.length;k++){
-              const ang = this._a0[k] + this._om[k] * ((now - t0)/1000);
-              const cx = this.cx + this.orbits[k] * Math.cos(ang);
-              const cy = this.cy + this.orbits[k] * Math.sin(ang);
-              const d  = Math.hypot(px - cx, py - cy);
-              const a  = Math.max(0, 1 - Math.abs(d - HALO_R)/HALO_BW);
-              if (a > haloMask) haloMask = a;
-            }
-            const vis = planetsMix; // fade in orbits/halos
-            alpha = Math.max(alpha, orbitMask*vis, haloMask*vis);
-          }
-
-          if (alpha > 0.02) {
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = "#d7e0ee";
-            const ch = line.charAt((i + charOffset) % line.length) || "•";
-            ctx.fillText(ch, px, py);
-          }
-
-          // advance θ
-          this.theta[i] = th + speedNow*dt;
-        }
-        ctx.globalAlpha = 1;
-
-        // Planets
-        if (planetsOn || planetsMix>0) {
-          ctx.save();
-          for (let k=0;k<this.orbits.length;k++){
-            const ang = this._a0[k] + this._om[k] * ((now - t0)/1000);
-            const r   = this.orbits[k];
-            const ax  = this.cx + r * Math.cos(ang);
-            const ay  = this.cy + r * Math.sin(ang);
-            // halo ring
-            ctx.globalAlpha = 0.20 * planetsMix;
-            ctx.strokeStyle = "rgba(148,163,184,1)";
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.arc(ax, ay, HALO_R, 0, Math.PI*2); ctx.stroke();
-            // planet dot
-            ctx.globalAlpha = planetsMix;
-            ctx.fillStyle = PLANETS[k].color;
-            ctx.beginPath(); ctx.arc(ax, ay, PLANETS[k].r, 0, Math.PI*2); ctx.fill();
-          }
-          ctx.restore();
-        }
+        // Planet phases & rates (mean anomaly)
+        const daysNow = Date.now()/86400000;
+        this._a0 = PLANETS.map(p => 2*Math.PI * ((daysNow % p.P) / p.P));
+        this._om = PLANETS.map(p => 2*Math.PI * (DAYS_PER_SEC / p.P));
 
         // HUD
-        const el = document.getElementById('hud');
-        if (el) el.textContent = `inline-orbits-r20-fluid | intro=${tIntro.toFixed(2)} morph=${morph.toFixed(2)} speed=${speedNow.toFixed(3)} rad/s`;
+        const hud = msg => { const el = document.getElementById('hud'); if (el) el.textContent = msg; };
 
-        // cache locals for planets (avoid per-glyph property lookups in loop)
+        this.__version = "inline-orbits-r20-fluid";
+        let t0 = performance.now(), tPrev = t0;
+
+        const tick = (now) => {
+          const dt = Math.min(1/20, Math.max(0,(now - tPrev)/1000)); tPrev = now;
+
+          ctx.clearRect(0,0,innerWidth,innerHeight);
+          ctx.textAlign="center"; ctx.textBaseline="middle";
+
+          // Timeline
+          const INTRO_MS = 1000 * 3.0; // 3s readable slide
+          const tIntro   = clamp01((now - t0) / INTRO_MS);
+          const postIntroMs = Math.max(0, now - (t0 + INTRO_MS));
+          const mRaw = clamp01(postIntroMs / 1100);        // MORPH_MS
+          const morph = easeCubic(mRaw);
+
+          // Speeds
+          const speedNow = lerp(0.0020, 0.0160, morph);
+          const stepMs   = lerp(580, 320, morph);
+
+          // Orbits/planets fade-in
+          const planetsOn  = morph >= 0.98;
+          const planetsMix = clamp01((morph - 0.98) / 0.05);
+
+          // Intro slide params
+          const slidePhase = (now - t0) / 1000;
+          const slideGain  = 1 - morph;
+
+          // Lines (faint) when they appear
+          if (planetsOn || planetsMix>0) {
+            ctx.save();
+            ctx.globalAlpha = 0.18 * planetsMix;
+            ctx.strokeStyle = "rgba(148,163,184,1)";
+            ctx.lineWidth = 1;
+            this.orbits.forEach(r=>{
+              ctx.beginPath();
+              ctx.arc(this.cx, this.cy, r, 0, Math.PI*2);
+              ctx.stroke();
+            });
+            ctx.restore();
+          }
+
+          // Slow character cycling
+          const charOffset = Math.floor(now / 5000) % (this.words.join("•").length+1);
+
+          // Grid helpers
+          const halfRowsH = (ROWS*this.cellH)/2;
+          this.occ.fill(-1);
+          this.res.fill(-1);
+          ctx.font = `${this.fontPx}px "Courier New", monospace`;
+
+          for (let i=0;i<this.N;i++){
+            // Spiral param
+            let th = this.theta[i];
+            if (th > this.maxTheta){ th -= this.maxTheta; this.theta[i]=th; }
+            const r  = 4.2*th;
+            const sx = this.cx + r*Math.cos(th);
+            const sy = this.cy + r*Math.sin(th);
+
+            // Row baseline + gentle slide
+            const rr = this.rcRow[i];
+            const cc = this.rcCol[i];
+            const baseX = (cc + 0.5) * this.cellW;
+            const baseY = (rr + 0.5) * this.cellH + (this.cy - halfRowsH);
+            const drift  = ((rr&1)? 1 : -1) * 24 * tIntro;
+            const slide  = ((rr&1)? 1 : -1) * 42 * Math.sin(slidePhase*0.6 + rr*0.15);
+            const rx = baseX + (drift + slide) * slideGain;
+            const ry = baseY;
+
+            // Blend toward spiral
+            const tx = rx*(1-morph) + sx*morph;
+            const ty = ry*(1-morph) + sy*morph;
+            const ciT = Math.round(tx / this.cellW);
+            const riT = Math.round(ty / this.cellH);
+
+            // Current cell
+            let ci = this.curCi[i], ri = this.curRi[i];
+
+            // Start a move if needed (grid-stepped + smooth travel)
+            if (!this.mvOn[i] && (ciT!==ci || riT!==ri) && now >= this.nextAt[i]) {
+              const dci = ciT - ci, dri = riT - ri;
+              let nci = ci, nri = ri;
+              if (Math.abs(dci) >= Math.abs(dri)) nci += Math.sign(dci)||0;
+              else                                 nri += Math.sign(dri)||0;
+              nci = Math.max(0, Math.min(this.cols-1, nci));
+              nri = Math.max(0, Math.min(this.rows-1, nri));
+              const key = nri*this.cols + nci;
+              if (this.res[key] === -1) {
+                this.res[key] = i;
+                this.mvOn[i] = 1;
+                this.mvT0[i] = now;
+                this.mvT1[i] = now + 300; // TRAVEL_MS
+                this.mvFromCi[i] = ci; this.mvFromRi[i] = ri;
+                this.mvToCi[i]   = nci; this.mvToRi[i]   = nri;
+                this.nextAt[i]   = now + stepMs;
+              }
+            }
+
+            // Draw position (fluid between cells)
+            let px, py;
+            if (this.mvOn[i]) {
+              const f = clamp01((now - this.mvT0[i]) / (this.mvT1[i] - this.mvT0[i]));
+              const ff = easeInOut(f);
+              const fx = (this.mvFromCi[i] + 0.5) * this.cellW;
+              const fy = (this.mvFromRi[i] + 0.5) * this.cellH + (this.cy - halfRowsH);
+              const tx2= (this.mvToCi[i]   + 0.5) * this.cellW;
+              const ty2= (this.mvToRi[i]   + 0.5) * this.cellH + (this.cy - halfRowsH);
+              px = fx + (tx2 - fx) * ff;
+              py = fy + (ty2 - fy) * ff;
+              if (f >= 1) {
+                this.mvOn[i]=0;
+                this.curCi[i]=this.mvToCi[i];
+                this.curRi[i]=this.mvToRi[i];
+              }
+            } else {
+              px = (ci + 0.5) * this.cellW;
+              py = (ri + 0.5) * this.cellH + (this.cy - halfRowsH);
+            }
+
+            // Single occupancy
+            const keyDraw = Math.round(py/this.cellH)*this.cols + Math.round(px/this.cellW);
+            if (keyDraw>=0 && keyDraw<this.occ.length) {
+              if (this.occ[keyDraw] !== -1 && this.occ[keyDraw] !== i) {
+                this.theta[i] = th + speedNow*dt; // advance and skip
+                continue;
+              }
+              this.occ[keyDraw] = i;
+            }
+
+            // Alpha: base fade + orbit/halo masks
+            let alpha = Math.pow(1 - morph, 1.5);
+            if (planetsOn) {
+              // orbit mask
+              const dist = Math.hypot(px - this.cx, py - this.cy);
+              let orbitMask = 0;
+              for (let k=0;k<this.orbits.length;k++){
+                const d = Math.abs(dist - this.orbits[k]);
+                const a = Math.max(0, 1 - d/8); // ORBIT_BAND
+                if (a > orbitMask) orbitMask = a;
+              }
+              // halo mask
+              let haloMask = 0;
+              for (let k=0;k<this.orbits.length;k++){
+                const ang = this._a0[k] + this._om[k] * ((now - t0)/1000);
+                const cx = this.cx + this.orbits[k] * Math.cos(ang);
+                const cy = this.cy + this.orbits[k] * Math.sin(ang);
+                const d  = Math.hypot(px - cx, py - cy);
+                const a  = Math.max(0, 1 - Math.abs(d - 22)/7); // HALO_R / HALO_BW
+                if (a > haloMask) haloMask = a;
+              }
+              const vis = planetsMix;
+              alpha = Math.max(alpha, orbitMask*vis, haloMask*vis);
+            }
+
+            if (alpha > 0.02) {
+              ctx.globalAlpha = alpha;
+              ctx.fillStyle = "#d7e0ee";
+              const ch = line.charAt((i + charOffset) % line.length) || "•";
+              ctx.fillText(ch, px, py);
+            }
+
+            // Advance θ
+            this.theta[i] = th + speedNow*dt;
+          }
+          ctx.globalAlpha = 1;
+
+          // Planets
+          if (planetsOn || planetsMix>0) {
+            ctx.save();
+            for (let k=0;k<this.orbits.length;k++){
+              const ang = this._a0[k] + this._om[k] * ((now - t0)/1000);
+              const r   = this.orbits[k];
+              const ax  = this.cx + r * Math.cos(ang);
+              const ay  = this.cy + r * Math.sin(ang);
+              // halo
+              ctx.globalAlpha = 0.20 * planetsMix;
+              ctx.strokeStyle = "rgba(148,163,184,1)";
+              ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.arc(ax, ay, 22, 0, Math.PI*2); ctx.stroke();
+              // planet
+              ctx.globalAlpha = planetsMix;
+              ctx.fillStyle = PLANETS[k].color;
+              ctx.beginPath(); ctx.arc(ax, ay, PLANETS[k].r, 0, Math.PI*2); ctx.fill();
+            }
+            ctx.restore();
+          }
+
+          // HUD
+          const hudEl = document.getElementById('hud');
+          if (hudEl) hudEl.textContent =
+            `inline-orbits-r20-fluid | intro=${(clamp01((now - t0)/ (1000*3))).toFixed(2)} morph=${morph.toFixed(2)} speed=${speedNow.toFixed(3)} rad/s`;
+
+          requestAnimationFrame(tick);
+        };
+
         requestAnimationFrame(tick);
-      };
-
-      // Cache planet phases & omegas on instance (so the glyph loop uses fast arrays)
-      const daysNow = Date.now()/86400000;
-      this._a0 = PLANETS.map(p => 2*Math.PI * ((daysNow % p.P) / p.P));
-      this._om = PLANETS.map(p => 2*Math.PI * (DAYS_PER_SEC / p.P));
-
-      requestAnimationFrame(tick);
+      }
     }
-  }
 
-  // Register/replace element
-  const TAG='vortex-ultraslow';
-  const Def = VortexPlanetsFluid;
-  if (!customElements.get(TAG)) {
-    customElements.define(TAG, Def);
-  } else {
-    const NewTag='vortex-ultraslow-r20';
-    if (!customElements.get(NewTag)) customElements.define(NewTag, Def);
-    const old=document.querySelector(TAG);
-    if (old) old.replaceWith(document.createElement(NewTag));
-  }
-})();
-</script>
+    // Register/replace custom element
+    const TAG='vortex-ultraslow';
+    if (!customElements.get(TAG)) {
+      customElements.define(TAG, VortexPlanetsFluid);
+    } else {
+      const NewTag='vortex-ultraslow-r20';
+      if (!customElements.get(NewTag)) customElements.define(NewTag, VortexPlanetsFluid);
+      const old=document.querySelector(TAG);
+      if (old) old.replaceWith(document.createElement(NewTag));
+    }
+  })();
+  </script>
+</body>
+</html>
