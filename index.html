@@ -66,17 +66,23 @@
     .pill.ghost:hover{background:rgba(255,255,255,.16)}
     .scroll-cue{position:absolute; bottom:18px; left:50%; transform:translateX(-50%); color:var(--muted); font-size:13px; letter-spacing:.2em}
 
-    /* Button/caption group that “sticks” with the hero/orbital element */
+    /* Button/caption group anchored to hero bottom-right */
     .nb-wrap{
       position:absolute; right:18px; bottom:18px; z-index:12;
-      display:flex; gap:10px; align-items:flex-end;
+      display:flex; flex-direction:column; align-items:flex-end; gap:8px;
     }
-    .nb-col{display:flex; flex-direction:column; gap:8px; align-items:flex-end}
     .nb-caption{
       color:#cfe6ff; font-size:12px; text-align:right;
       text-shadow:0 1px 4px rgba(0,0,0,.55);
     }
     .nb-caption a{color:#93c5fd; text-decoration:underline}
+    .nb-controls{
+      display:flex; align-items:flex-end; gap:12px;
+    }
+    .nb-lead{
+      font-size:14px; color:#e2f1ff; font-weight:700; white-space:nowrap;
+      text-shadow:0 1px 4px rgba(0,0,0,.6);
+    }
     .nb{
       background:rgba(2,6,23,.7); color:#e5e7eb; border:1px solid rgba(255,255,255,.15);
       padding:10px 14px; border-radius:12px; cursor:pointer;
@@ -86,11 +92,11 @@
     .nb strong{font-size:13px; letter-spacing:.02em}
     .nb span{font-size:11px; color:#94a3b8}
 
-    /* CONTENT: ESA background with HALF-opacity dark overlay */
+    /* CONTENT: ESA background with TWICE-as-dark overlay */
     .content{
       position:relative; z-index:8;
       background:
-        linear-gradient(to bottom, rgba(15,23,42,.46) 0%, rgba(11,19,36,.48) 100%),
+        linear-gradient(to bottom, rgba(15,23,42,.92) 0%, rgba(11,19,36,.96) 100%),
         url('assets/portfolio/ESAM31Capture.jpg') center/cover no-repeat fixed;
       border-top:1px solid var(--ring);
       isolation:isolate;
@@ -170,21 +176,20 @@
 
     <!-- Caption + buttons that “stick” with the orbital element -->
     <div class="nb-wrap">
-      <div class="nb-col">
-        <div class="nb-caption">
-          Coded by Jack Emmerson<br>
-          <a href="https://github.com/jackoridd7/jackemmerson.github.io" target="_blank" rel="noopener">GitHub Repository</a>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button id="dots-btn" class="nb" type="button">
-            <strong>Show Planets</strong>
-            <span>restore dots</span>
-          </button>
-          <button id="nb-btn" class="nb" type="button">
-            <strong>Remove Sun</strong>
-            <span>n-body chaos</span>
-          </button>
-        </div>
+      <div class="nb-caption">
+        Coded by Jack Emmerson<br>
+        <a href="https://github.com/jackoridd7/jackemmerson.github.io" target="_blank" rel="noopener">GitHub Repository</a>
+      </div>
+      <div class="nb-controls">
+        <div class="nb-lead">Simulate 5-body Problem! ---------&gt;</div>
+        <button id="nb-btn" class="nb" type="button">
+          <strong>5-Body Sim</strong>
+          <span>n-body chaos</span>
+        </button>
+        <button id="dots-btn" class="nb" type="button">
+          <strong>Show Planets</strong>
+          <span>restore dots</span>
+        </button>
       </div>
     </div>
   </main>
@@ -281,7 +286,7 @@
   </div>
 
   <footer>© 2025 Jack Emmerson</footer>
-  <div id="hud" class="hud">inline-orbits-r26 | ready</div>
+  <div id="hud" class="hud">inline-orbits-r27 | ready</div>
 
   <!-- Reveal on scroll -->
   <script>
@@ -295,7 +300,7 @@
     })();
   </script>
 
-  <!-- ====== Orbit/spiral effect with stronger n-body + half-speed init & dots toggle ====== -->
+  <!-- ====== Orbit/spiral effect with 5-body n-body + half-speed init & dots toggle ====== -->
   <script>
   (function(){
     const PLANETS = [
@@ -304,6 +309,8 @@
       {name:"Earth",   a:1.0000, P: 365.256, color:"#60a5fa", dot:7, disc:44, m:1.000},
       {name:"Mars",    a:1.5237, P: 686.980, color:"#f87171", dot:7, disc:50, m:0.107}
     ];
+    const SUN = {name:"Sun", color:"#fde68a", dot:9, m:333000}; // Earth-mass units (scaled)
+
     const INTRO_SECS=1.5, SLIDE_PX_PER_SEC=28, SPIRAL_MS=1200, B_SPIRAL=4.2, SPEED_RAD_S=0.012;
     const CELL_W=12, CELL_H=36, ROWS=40, CENTER_X=.5, CENTER_Y=.58, DAYS_PER_SEC=30;
     const WORDS=["TRAJECTORY","PROPULSION","Δv","CFD","REENTRY","ORBITAL","STARSHIP","MARS","SPICE","ROVER","SCRAMJET","UAV"];
@@ -345,7 +352,7 @@
           for(let i=0;i<this.N;i++) this.theta[i]=(i/this.N)*this.maxTheta;
 
           const minDim=Math.min(innerWidth,innerHeight);
-          const kpx=(0.45*minDim)/1.5237; // Mars outermost scale
+          const kpx=(0.45*minDim)/1.5237; // Mars outermost
           this.orbitR=PLANETS.map(p=>p.a*kpx);
 
           const daysNow=Date.now()/86400000;
@@ -357,7 +364,7 @@
         this.t0=performance.now(); this.last=this.t0;
         requestAnimationFrame(this.tick.bind(this));
 
-        // Exposed controls
+        // Controls
         this.toggleNBody = () => { if (!this.nbMode) this.initNBody(); else this.resetAnalytic(); };
         this.toggleDots  = () => {
           this.showDots = !this.showDots;
@@ -366,16 +373,22 @@
                  b.querySelector('span').textContent   = this.showDots ? 'text-only rings' : 'restore dots'; }
         };
 
-        // sync initial button label (since default is hidden)
+        // Sync initial label (hidden by default)
         const b=document.getElementById('dots-btn');
         if(b){ b.querySelector('strong').textContent='Show Planets'; b.querySelector('span').textContent='restore dots'; }
       }
 
-      // Build n-body initial state from current analytic positions, HALF velocities
+      // n-body initial state: planets at current analytic position, HALF velocities; add Sun at center
       initNBody(){
         const now=performance.now();
         const tSec=(now-this.t0)/1000;
         const pos=[], vel=[], mass=[];
+        // Sun first (index 0)
+        pos.push({x:0, y:0});
+        vel.push({x:0, y:0});
+        mass.push(SUN.m);
+
+        // Planets follow
         for(let k=0;k<this.orbitR.length;k++){
           const r=this.orbitR[k];
           const a=this.ang0[k]+this.omega[k]*tSec;
@@ -397,7 +410,7 @@
       resetAnalytic(){
         this.nbMode=false;
         const btn=document.getElementById('nb-btn');
-        if(btn){ btn.querySelector('strong').textContent='Remove Sun'; btn.querySelector('span').textContent='n-body chaos'; }
+        if(btn){ btn.querySelector('strong').textContent='5-Body Sim'; btn.querySelector('span').textContent='n-body chaos'; }
       }
 
       tick(now){
@@ -412,7 +425,7 @@
         const tSpiral=clamp01((now-(this.t0+introMs))/SPIRAL_MS);
         const sMix=easeCubic(tSpiral);
 
-        const px=[], py=[];
+        let px=[], py=[], sunPX=this.cx, sunPY=this.cy; // defaults
         if (!this.nbMode){
           const tSec=(now-this.t0)/1000;
           for(let k=0;k<this.orbitR.length;k++){
@@ -421,7 +434,7 @@
             py[k]=this.cy+this.orbitR[k]*Math.sin(a);
           }
         } else {
-          // n-body: stronger gravity
+          // 5-body (Sun + 4 planets): strong gravity but clamped
           const G=900000, EPS=30, MAX_ACC=4000;
           const {pos,vel,mass}=this.nb; const N=pos.length;
           const ax=new Array(N).fill(0), ay=new Array(N).fill(0);
@@ -442,8 +455,12 @@
             vel[i].y += ay[i]*clamp*dt;
             pos[i].x += vel[i].x*dt;
             pos[i].y += vel[i].y*dt;
-            px[i]=this.cx+pos[i].x; py[i]=this.cy+pos[i].y;
           }
+          // map back to screen coords
+          const pxB=[], pyB=[];
+          for(let i=0;i<N;i++){ pxB[i]=this.cx+this.nb.pos[i].x; pyB[i]=this.cy+this.nb.pos[i].y; }
+          sunPX=pxB[0]; sunPY=pyB[0];
+          px = pxB.slice(1); py = pyB.slice(1); // planets only
         }
 
         // Intro text morph & planet-disc reveal
@@ -480,16 +497,22 @@
         }
         x.globalAlpha=1;
 
-        // Planet dots (toggleable) — start hidden
+        // Planet dots (toggleable) + Sun dot (only in n-body)
         if(this.showDots){
+          // Planets
           for(let k=0;k<PLANETS.length;k++){
             x.fillStyle=PLANETS[k].color;
             x.beginPath(); x.arc(px[k],py[k],PLANETS[k].dot,0,Math.PI*2); x.fill();
           }
+          // Sun in n-body mode
+          if(this.nbMode){
+            x.fillStyle=SUN.color;
+            x.beginPath(); x.arc(sunPX,sunPY,SUN.dot,0,Math.PI*2); x.fill();
+          }
         }
 
         const hud=document.getElementById('hud');
-        if(hud) hud.textContent=`inline-orbits-r26 | mode=${this.nbMode?'n-body':'analytic'} | dots=${this.showDots?'on':'off'}`;
+        if(hud) hud.textContent=`inline-orbits-r27 | mode=${this.nbMode?'5-body':'analytic'} | dots=${this.showDots?'on':'off'}`;
 
         requestAnimationFrame(this.tick.bind(this));
       }
