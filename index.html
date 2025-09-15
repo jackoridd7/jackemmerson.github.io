@@ -435,7 +435,7 @@
           }
         } else {
           // 5-body (Sun + 4 planets): strong gravity but clamped
-          const G=900000, EPS=30, MAX_ACC=4000;
+          const G=90000, EPS=30, MAX_ACC=400;
           const {pos,vel,mass}=this.nb; const N=pos.length;
           const ax=new Array(N).fill(0), ay=new Array(N).fill(0);
           for(let i=0;i<N;i++){
