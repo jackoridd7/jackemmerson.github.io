@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=854, initial-scale=1">
+  <title>NASA Live Wrapper</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 854px;
+      height: 480px;
+      overflow: hidden;
+      background: #000;
+    }
+    iframe {
+      width: 854px;
+      height: 480px;
+      border: 0;
+      background: #000;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    id="yt"
+    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+  </iframe>
+
+  <script>
+    const channelId = "UCLA_DiR1FfKNvjuUpBHmylQ"; // NASA
+    const origin = encodeURIComponent(location.origin);
+    document.getElementById("yt").src =
+      `https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1&mute=1&playsinline=1&origin=${origin}`;
+  </script>
+</body>
+</html>
