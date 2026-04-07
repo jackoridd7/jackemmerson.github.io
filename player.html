@@ -11,69 +11,35 @@
       height: 480px;
       overflow: hidden;
       background: #000;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #fff;
     }
-    iframe {
+
+    #wrap {
+      position: relative;
       width: 854px;
       height: 480px;
-      border: 0;
-      display: block;
+      overflow: hidden;
       background: #000;
     }
-    #msg {
-      width: 854px;
-      height: 480px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-      box-sizing: border-box;
-      color: rgba(255,255,255,0.8);
-      line-height: 1.5;
+
+    /* oversized iframe, cropped to the 854x480 viewport */
+    iframe {
+      position: absolute;
+      left: -220px;
+      top: -180px;
+      width: 1400px;
+      height: 1100px;
+      border: 0;
+      background: #000;
     }
   </style>
 </head>
 <body>
-  <iframe id="frame" allowfullscreen></iframe>
-  <div id="msg"></div>
-
-  <script>
-    // OPTIONS:
-    // "twitch"   = practical non-YouTube option
-    // "nasaplus" = official NASA+ event page attempt
-    const MODE = "twitch";
-
-    // Your GitHub Pages host domain for Twitch's required parent parameter
-    const TWITCH_PARENT = "jackoridd7.github.io";
-
-    // Current official NASA Twitch channel
-    const TWITCH_CHANNEL = "nasa";
-
-    // Swap this when you want a specific official NASA+ event page
-    const NASA_PLUS_EVENT_URL =
-      "https://plus.nasa.gov/scheduled-events/";
-
-    const frame = document.getElementById("frame");
-    const msg = document.getElementById("msg");
-
-    if (MODE === "twitch") {
-      frame.src =
-        `https://player.twitch.tv/?channel=${encodeURIComponent(TWITCH_CHANNEL)}&parent=${encodeURIComponent(TWITCH_PARENT)}&muted=true&autoplay=true`;
-    } else if (MODE === "nasaplus") {
-      frame.src = NASA_PLUS_EVENT_URL;
-    } else {
-      frame.style.display = "none";
-      msg.style.display = "flex";
-      msg.textContent = "Invalid MODE in player.html";
-    }
-
-    frame.onerror = () => {
-      frame.style.display = "none";
-      msg.style.display = "flex";
-      msg.textContent = "Stream failed to load.";
-    };
-  </script>
+  <div id="wrap">
+    <iframe
+      src="https://www.nasa.gov/live/"
+      allow="autoplay; fullscreen"
+      allowfullscreen>
+    </iframe>
+  </div>
 </body>
 </html>
