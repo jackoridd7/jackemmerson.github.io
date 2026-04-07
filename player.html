@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=854, initial-scale=1">
-  <title>NASA Live Wrapper</title>
+  <title>NASA Player</title>
   <style>
     html, body {
       margin: 0;
@@ -12,29 +11,69 @@
       height: 480px;
       overflow: hidden;
       background: #000;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #fff;
     }
     iframe {
       width: 854px;
       height: 480px;
       border: 0;
-      background: #000;
       display: block;
+      background: #000;
+    }
+    #msg {
+      width: 854px;
+      height: 480px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      box-sizing: border-box;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <iframe
-    id="yt"
-    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-    allowfullscreen
-    referrerpolicy="strict-origin-when-cross-origin">
-  </iframe>
+  <iframe id="frame" allowfullscreen></iframe>
+  <div id="msg"></div>
 
   <script>
-    const channelId = "UCLA_DiR1FfKNvjuUpBHmylQ"; // NASA
-    const origin = encodeURIComponent(location.origin);
-    document.getElementById("yt").src =
-      `https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1&mute=1&playsinline=1&origin=${origin}`;
+    // OPTIONS:
+    // "twitch"   = practical non-YouTube option
+    // "nasaplus" = official NASA+ event page attempt
+    const MODE = "twitch";
+
+    // Your GitHub Pages host domain for Twitch's required parent parameter
+    const TWITCH_PARENT = "jackoridd7.github.io";
+
+    // Current official NASA Twitch channel
+    const TWITCH_CHANNEL = "nasa";
+
+    // Swap this when you want a specific official NASA+ event page
+    const NASA_PLUS_EVENT_URL =
+      "https://plus.nasa.gov/scheduled-events/";
+
+    const frame = document.getElementById("frame");
+    const msg = document.getElementById("msg");
+
+    if (MODE === "twitch") {
+      frame.src =
+        `https://player.twitch.tv/?channel=${encodeURIComponent(TWITCH_CHANNEL)}&parent=${encodeURIComponent(TWITCH_PARENT)}&muted=true&autoplay=true`;
+    } else if (MODE === "nasaplus") {
+      frame.src = NASA_PLUS_EVENT_URL;
+    } else {
+      frame.style.display = "none";
+      msg.style.display = "flex";
+      msg.textContent = "Invalid MODE in player.html";
+    }
+
+    frame.onerror = () => {
+      frame.style.display = "none";
+      msg.style.display = "flex";
+      msg.textContent = "Stream failed to load.";
+    };
   </script>
 </body>
 </html>
